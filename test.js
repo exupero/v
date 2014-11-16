@@ -1,0 +1,139 @@
+var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('expected '+JSON.stringify(ex));err('actually '+JSON.stringify(ac));},success=function(){process.stdout.write('.')};
+(function(){
+  var expect=function(src,tokens){
+    var ts=v.lex(src);
+    if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);return};
+    for(var i=0;i<tokens.length;i++){
+      var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+JSON.stringify(a)+' != '+JSON.stringify(e));return}};
+    success();}
+  expect('a b',[{type:'word',value:'a',part:'noun'},{type:'word',value:'b',part:'noun'}]);
+  expect('`sym',[{type:'symbol',value:'sym',part:'noun'}]);
+  expect('1 1.2',[{type:'int',value:'1',part:'noun'},{type:'float',value:'1.2',part:'noun'}]);
+  expect('"string" "str\\"ing"',[{type:'string',value:'string',part:'noun'},{type:'string',value:'str"ing',part:'noun'}]);
+  expect('~!@#$%^&*,.<>?=+|-_;:()[]{}',[
+    {type:'tilde',value:'~',part:'verb'},
+    {type:'bang',value:'!',part:'verb'},
+    {type:'at',value:'@',part:'verb'},
+    {type:'hash',value:'#',part:'verb'},
+    {type:'dollar',value:'$',part:'verb'},
+    {type:'percent',value:'%',part:'verb'},
+    {type:'caret',value:'^',part:'verb'},
+    {type:'amp',value:'&',part:'verb'},
+    {type:'star',value:'*',part:'verb'},
+    {type:'comma',value:',',part:'verb'},
+    {type:'dot',value:'.',part:'verb'},
+    {type:'langle',value:'<',part:'verb'},
+    {type:'rangle',value:'>',part:'verb'},
+    {type:'query',value:'?',part:'verb'},
+    {type:'equals',value:'=',part:'verb'},
+    {type:'plus',value:'+',part:'verb'},
+    {type:'pipe',value:'|',part:'verb'},
+    {type:'dash',value:'-',part:'verb'},
+    {type:'under',value:'_',part:'verb'},
+    {type:'semi',value:';',part:void 0},
+    {type:'colon',value:':',part:'verb'},
+    {type:'laren',value:'(',part:void 0},
+    {type:'raren',value:')',part:void 0},
+    {type:'lacket',value:'[',part:void 0},
+    {type:'racket',value:']',part:void 0},
+    {type:'lace',value:'{',part:void 0},
+    {type:'race',value:'}',part:void 0}]);
+  expect("' '/ '\\ ': 'ello",[
+    {type:'each',value:"'",part:'adverb'},
+    {type:'eachRight',value:"'/",part:'adverb'},
+    {type:'eachLeft',value:"'\\",part:'adverb'},
+    {type:'eachPair',value:"':",part:'adverb'},
+    {type:'each',value:"'",part:'adverb'},
+    {type:'word',value:'ello',part:'noun'}]);
+  expect("abCDNL Ci Di Ni Li",[
+    {type:'word',value:'abCDNL',part:'noun'},
+    {type:'channel',value:'C',part:'noun'},{type:'word',value:'i',part:'noun'},
+    {type:'dict',value:'D',part:'verb'},{type:'word',value:'i',part:'noun'},
+    {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'},
+    {type:'lazy',value:'L',part:'verb'},{type:'word',value:'i',part:'noun'}]);
+  expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:'semi',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
+  expect("abc / this",[{type:'word',value:'abc',part:'noun'}]);
+})();
+(function(){
+  var expect=function(src,expected){
+    try{var ast=v.parse(src);}catch(e){err('Error parsing `'+src+'`: '+e);return;}
+    if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);return};
+    for(var i=0;i<ast.length;i++){
+      var a=ast[i],e=expected[i];
+      if(JSON.stringify(a)!=JSON.stringify(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);return;}}
+    success();}
+  var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`');}catch(e){}}
+  expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},args:{type:'word',value:'b',part:'noun'}}]);
+  expect('1+',[{type:'curry',part:'verb',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
+  expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},noun:{type:'int',value:'1',part:'noun'}}]);
+  expect("+1",[{type:'applyMonad',part:'noun',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
+  expect("+-",[{type:'compose',part:'verb',f:{type:'plus',value:'+',part:'verb'},g:{type:'dash',value:'-',part:'verb'}}]);
+  expect("+/",[{type:'modVerb',part:'verb',mod:{type:'slash',value:'/',part:'adverb'},verb:{type:'plus',value:'+',part:'verb'}}]);
+  expect("1+/",[
+    {type:'curry',part:'verb',
+     func:{type:'modVerb',part:'verb',
+           mod:{type:'slash',value:'/',part:'adverb'},
+           verb:{type:'plus',value:'+',part:'verb'}},
+     arg:{type:'int',value:'1',part:'noun'}}]);
+  expect("+/1",[
+    {type:'applyMonad',part:'noun',
+     func:{type:'modVerb',part:'verb',
+           mod:{type:'slash',value:'/',part:'adverb'},
+           verb:{type:'plus',value:'+',part:'verb'}},
+     arg:{type:'int',value:'1',part:'noun'}}]);
+  expect("2+/1",[
+    {type:'applyMonad',part:'noun',
+     func:{type:'curry',part:'verb',
+           func:{type:'modVerb',part:'verb',
+                 mod:{type:'slash',value:'/',part:'adverb'},
+                 verb:{type:'plus',value:'+',part:'verb'}},
+           arg:{type:'int',value:'2',part:'noun'}},
+     arg:{type:'int',value:'1',part:'noun'}}]);
+  expect('a;b',[{type:'word',value:'a',part:'noun'},{type:'word',value:'b',part:'noun'}]);
+  expect('a+;b/',[
+    {type:'curry',part:'verb',
+     func:{type:'plus',value:'+',part:'verb'},
+     arg:{type:'word',value:'a',part:'noun'}},
+    {type:'modNoun',part:'verb',
+     mod:{type:'slash',value:'/',part:'adverb'},
+     noun:{type:'word',value:'b',part:'noun'}}]);
+  expectFailure('1-(}')
+  expect('1-(2*3)+4',[
+    {type:'applyMonad',part:'noun',
+     func:{type:'curry',part:'verb',
+           func:{type:'dash',value:'-',part:'verb'},
+           arg:{type:'int',value:'1',part:'noun'}},
+     arg:{type:'applyMonad',part:'noun',
+          func:{type:'curry',part:'verb',
+                func:{type:'plus',value:'+',part:'verb'},
+                arg:{type:'applyMonad',part:'noun',
+                     func:{type:'curry',part:'verb',
+                           func:{type:'star',value:'*',part:'verb'},
+                           arg:{type:'int',value:'2',part:'noun'}},
+                     arg:{type:'int',value:'3',part:'noun'}}},
+          arg:{type:'int',value:'4',part:'noun'}}}]);
+  expect('1-(2;3)+4',[
+    {type:'applyMonad',part:'noun',
+     func:{type:'curry',part:'verb',
+           func:{type:'dash',value:'-',part:'verb'},
+           arg:{type:'int',value:'1',part:'noun'}},
+     arg:{type:'applyMonad',part:'noun',
+          func:{type:'curry',part:'verb',
+                func:{type:'plus',value:'+',part:'verb'},
+                arg:{type:'list',part:'noun',
+                     items:[{type:'int',value:'2',part:'noun'},
+                            {type:'int',value:'3',part:'noun'}]}},
+          arg:{type:'int',value:'4',part:'noun'}}}]);
+  expect('[x;y]', [
+    {type:'argList',part:'noun',
+      args:[{type:'word',value:'x',part:'noun'},
+            {type:'word',value:'y',part:'noun'}]}]);
+  expect('{x*2}', [
+    {type:'func',part:'noun',
+     args:['x'],
+     body:[{type:'applyMonad',part:'noun',
+            func:{type:'curry',part:'verb',
+                  func:{type:'star',value:'*',part:'verb'},
+                  arg:{type:'word',value:'x',part:'noun'}},
+            arg:{type:'int',value:'2',part:'noun'}}]}]);
+})();
