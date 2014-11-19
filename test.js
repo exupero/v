@@ -63,7 +63,7 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
       if(JSON.stringify(a)!=JSON.stringify(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);return;}}
     success();}
   var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`');}catch(e){}}
-  expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},args:{type:'word',value:'b',part:'noun'}}]);
+  expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
   expect('1+',[{type:'curry',part:'verb',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},noun:{type:'int',value:'1',part:'noun'}}]);
   expect("+1",[{type:'applyMonad',part:'noun',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
@@ -136,4 +136,11 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
                   func:{type:'star',value:'*',part:'verb'},
                   arg:{type:'word',value:'x',part:'noun'}},
             arg:{type:'int',value:'2',part:'noun'}}]}]);
+})();
+(function(){
+  var expect=function(src,x){
+    var i=0;
+    v.run(src,function(r){if(r!=x){err('`'+src+'` == '+JSON.stringify(r)+' != '+x);return;}i++;success();});
+    if(i==0)err('`'+src+'` does not return a result');}
+  expect('{x*2}2', 4);
 })();

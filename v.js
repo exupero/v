@@ -1,4 +1,4 @@
-var tokens,lex,eof=-1,log=console.log;
+var tokens,lex,parse,eval,evals,binop,eof=-1,log=console.log,spy=function(v){log(v);return v;},error=function(m){throw m;};
 tokens=function(input,st){
   var t={},s=0,p=0,w=0,ts=[];
   t.nextChar=function(){
@@ -88,25 +88,25 @@ exports.lex=lex=function(input){
   return tokens(input,init);}
 expr=function(ts){
   if(ts.length==1)return ts[0];
-  var st,bind,i=ts.length-1,invalid=function(a,b){throw "Invalid operation: "+a.value+" "+b.value;};
+  var st,bind,i=ts.length-1;
   st=function(a,b){
-    return (a.part=='noun'&&b.part=='noun')   ? 1
-          :(a.part=='verb'&&b.part=='verb')   ? 1
-          :(a.part=='verb'&&b.part=='noun')   ? 2
-          :(a.part=='noun'&&b.part=='verb')   ? 3
-          :(a.part=='noun'&&b.part=='adverb') ? 4
-          :(a.part=='verb'&&b.part=='adverb') ? 4
-          :void 0;}
+    return a.part=='noun'&&b.part=='noun'   ? 1
+          :a.part=='verb'&&b.part=='verb'   ? 1
+          :a.part=='verb'&&b.part=='noun'   ? 2
+          :a.part=='noun'&&b.part=='verb'   ? 3
+          :a.part=='noun'&&b.part=='adverb' ? 4
+          :a.part=='verb'&&b.part=='adverb' ? 4
+          :0;}
   bind=function(a,b){ts.splice(i-1,2,
-     (a.part=='noun'&&b.part=='noun')   ? {type:'apply',part:'noun',func:a,args:b}
-    :(a.part=='noun'&&b.part=='verb')   ? {type:'curry',part:'verb',func:b,arg:a}
-    :(a.part=='noun'&&b.part=='adverb') ? {type:'modNoun',part:'verb',mod:b,noun:a}
-    :(a.part=='verb'&&b.part=='noun')   ? {type:'applyMonad',part:'noun',func:a,arg:b}
-    :(a.part=='verb'&&b.part=='verb')   ? {type:'compose',part:'verb',f:a,g:b}
-    :(a.part=='verb'&&b.part=='adverb') ? {type:'modVerb',part:'verb',mod:b,verb:a}
-    :invalid(a,b))};
+     a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
+    :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
+    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,noun:a}
+    :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
+    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'verb',f:a,g:b}
+    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,verb:a}
+    :error('Invalid operation: '+a.value+' '+b.value))};
   while(ts.length>1){
-    i=i>ts.length-1 ? ts.length-1:i;
+    i=i>ts.length-1?ts.length-1:i;
     if(ts.length==2){bind(ts[i-1],ts[i]);break;}
     if(i==1){bind(ts[i-1],ts[i]);continue;}
     if(st(ts[i-2],ts[i-1])<st(ts[i-1],ts[i])){bind(ts[i-1],ts[i]);continue;}
@@ -132,4 +132,16 @@ wraps=function(ts){
       var args=tss.filter(function(t){return t.type=='word'&&(t.value=='x'||t.value=='y'||t.value=='z');}).map(function(t){return t.value;});
       return {type:'func',part:'noun',args:args,body:es};});}
   return ts;}
-exports.parse=function(src){return exprs(wraps(lex(src)));}
+exports.parse=parse=function(src){return exprs(wraps(lex(src)));}
+binop=function(f){return function(R,a){R(f.apply(null,a));}}
+eval=function(tr,r,env){
+  if(typeof tr.type == 'undefined'){r(tr);return;}
+  if(tr.type=='apply'||tr.type=='applyMonad'){eval(tr.func,function(f){eval(tr.arg,function(x){f(r,[x])},env);},env);return;}
+  if(tr.type=='curry'){eval(tr.func,function(f){eval(tr.arg,function(x){r(function(R,y){f(R,[x,y]);})},env)},env);return;}
+  if(tr.type=='func'){r(function(R,a){var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e);});return;}
+  if(tr.type=='star'){r(binop(function(a,b){return a*b}));return;}
+  if(tr.type=='word'){eval(env[tr.value],function(rs){r(rs);},{});return;}
+  if(tr.type=='int'){r(parseInt(tr.value));return;}
+  error('Invalid AST: '+JSON.stringify(tr));}
+evals=function(es,r,env){var i=0,next=function(rs){i<es.length?eval(es[i++],next,env):r(rs);};next();}
+exports.run=function(src,r){var env={},tr=parse(src);evals(tr,r,env);}
