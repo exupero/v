@@ -1,4 +1,4 @@
-var tokens,lex,parse,eval,evals,binop,eof=-1,log=console.log,spy=function(v){log(v);return v},error=function(m){throw m};
+var tokens,lex,parse,expr,exprs,wraps,eval,evals,binop,eof=-1,log=console.log,spy=function(v){log(v);return v},error=function(m){throw m};
 tokens=function(input,st){
   var t={},s=0,p=0,w=0,ts=[];
   t.nextChar=function(){
@@ -90,20 +90,32 @@ expr=function(ts){
   if(ts.length==1)return ts[0];
   var st,bind,i=ts.length-1;
   st=function(a,b){
-    return a.part=='noun'&&b.part=='noun'   ? 1
-          :a.part=='verb'&&b.part=='verb'   ? 1
-          :a.part=='verb'&&b.part=='noun'   ? 2
-          :a.part=='noun'&&b.part=='verb'   ? 3
-          :a.part=='noun'&&b.part=='adverb' ? 4
-          :a.part=='verb'&&b.part=='adverb' ? 4
+    return a.type=='int'&&b.type=='int'      ? 5
+          :a.type=='int'&&b.type=='float'    ? 5
+          :a.type=='float'&&b.type=='int'    ? 5
+          :a.type=='float'&&b.type=='float'  ? 5
+          :a.type=='vector'&&b.type=='int'   ? 5
+          :a.type=='vector'&&b.type=='float' ? 5
+          :a.part=='noun'&&b.part=='noun'    ? 1
+          :a.part=='verb'&&b.part=='verb'    ? 1
+          :a.part=='verb'&&b.part=='noun'    ? 2
+          :a.part=='noun'&&b.part=='verb'    ? 3
+          :a.part=='noun'&&b.part=='adverb'  ? 4
+          :a.part=='verb'&&b.part=='adverb'  ? 4
           :0}
   bind=function(a,b){ts.splice(i-1,2,
-     a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
-    :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
-    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,noun:a}
-    :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
-    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'verb',f:a,g:b}
-    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,verb:a}
+     a.type=='int'&&b.type=='int'      ? {type:'vector',part:'noun',values:[a,b]}
+    :a.type=='int'&&b.type=='float'    ? {type:'vector',part:'noun',values:[a,b]}
+    :a.type=='float'&&b.type=='int'    ? {type:'vector',part:'noun',values:[a,b]}
+    :a.type=='float'&&b.type=='float'  ? {type:'vector',part:'noun',values:[a,b]}
+    :a.type=='vector'&&b.type=='int'   ? {type:'vector',part:'noun',values:a.values.concat([b])}
+    :a.type=='vector'&&b.type=='float' ? {type:'vector',part:'noun',values:a.values.concat([b])}
+    :a.part=='noun'&&b.part=='noun'    ? {type:'apply',part:'noun',func:a,arg:b}
+    :a.part=='noun'&&b.part=='verb'    ? {type:'curry',part:'verb',func:b,arg:a}
+    :a.part=='noun'&&b.part=='adverb'  ? {type:'modNoun',part:'verb',mod:b,noun:a}
+    :a.part=='verb'&&b.part=='noun'    ? {type:'applyMonad',part:'noun',func:a,arg:b}
+    :a.part=='verb'&&b.part=='verb'    ? {type:'compose',part:'verb',f:a,g:b}
+    :a.part=='verb'&&b.part=='adverb'  ? {type:'modVerb',part:'verb',mod:b,verb:a}
     :error('Invalid operation: '+a.value+' '+b.value))};
   while(ts.length>1){
     i=i>ts.length-1?ts.length-1:i;

@@ -1,4 +1,4 @@
-var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('expected '+JSON.stringify(ex));err('actually '+JSON.stringify(ac))},success=function(){process.stdout.write('.')};
+var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('expected',JSON.stringify(ex));err('actually',JSON.stringify(ac))},success=function(){process.stdout.write('.')};
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
@@ -124,11 +124,11 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
                      items:[{type:'int',value:'2',part:'noun'},
                             {type:'int',value:'3',part:'noun'}]}},
           arg:{type:'int',value:'4',part:'noun'}}}]);
-  expect('[x;y]', [
+  expect('[x;y]',[
     {type:'argList',part:'noun',
       args:[{type:'word',value:'x',part:'noun'},
             {type:'word',value:'y',part:'noun'}]}]);
-  expect('{x*2}', [
+  expect('{x*2}',[
     {type:'func',part:'noun',
      args:['x'],
      body:[{type:'applyMonad',part:'noun',
@@ -136,11 +136,26 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
                   func:{type:'star',value:'*',part:'verb'},
                   arg:{type:'word',value:'x',part:'noun'}},
             arg:{type:'int',value:'2',part:'noun'}}]}]);
+  expect('1 2 3',[
+    {type:'vector',part:'noun',
+     values:[{type:'int',value:'1',part:'noun'},
+             {type:'int',value:'2',part:'noun'},
+             {type:'int',value:'3',part:'noun'}]}]);
+  expect('1.0 2.0 3.0',[
+    {type:'vector',part:'noun',
+     values:[{type:'float',value:'1.0',part:'noun'},
+             {type:'float',value:'2.0',part:'noun'},
+             {type:'float',value:'3.0',part:'noun'}]}]);
+  expect('1.0 2 3.0',[
+    {type:'vector',part:'noun',
+     values:[{type:'float',value:'1.0',part:'noun'},
+             {type:'int',value:'2',part:'noun'},
+             {type:'float',value:'3.0',part:'noun'}]}]);
 })();
 (function(){
   var expect=function(src,x){
     var i=0;
     v.run(src,function(r){if(r!=x){err('`'+src+'` == '+JSON.stringify(r)+' != '+x);return}i++;success()});
     if(i==0)err('`'+src+'` does not return a result')}
-  expect('{x*2}2', 4);
+  expect('{x*2}2',4);
 })();
