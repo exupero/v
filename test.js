@@ -151,11 +151,23 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
      values:[{type:'float',value:'1.0',part:'noun'},
              {type:'int',value:'2',part:'noun'},
              {type:'float',value:'3.0',part:'noun'}]}]);
+  expect('1+1 2 3',[
+    {type:'applyMonad',part:'noun',
+     func:{type:'curry',part:'verb',
+           func:{type:'plus',value:'+',part:'verb'},
+           arg:{type:'int',value:'1',part:'noun'}},
+     arg:{type:'vector',part:'noun',
+          values:[{type:'int',value:'1',part:'noun'},
+                  {type:'int',value:'2',part:'noun'},
+                  {type:'int',value:'3',part:'noun'}]}}]);
 })();
 (function(){
   var expect=function(src,x){
-    var i=0;
-    v.run(src,function(r){if(r!=x){err('`'+src+'` == '+JSON.stringify(r)+' != '+x);return}i++;success()});
-    if(i==0)err('`'+src+'` does not return a result')}
+    var c=false;
+    v.run(src,function(r){c=true;if(JSON.stringify(r)!=JSON.stringify(x)){err('`'+src+'` == '+JSON.stringify(r)+' != '+x);return}success()})
+    if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
+  expect('1 2 3',[1,2,3]);
+  expect('1+1 2 3',[2,3,4]);
+  expect('1 2 3+1 2 3',[2,4,6]);
 })();

@@ -1,4 +1,4 @@
-var tokens,lex,parse,expr,exprs,wraps,eval,evals,binop,eof=-1,log=console.log,spy=function(v){log(v);return v},error=function(m){throw m};
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalv,applyBin,binop,eof=-1,log=console.log,spy=function(v){log(v);return v},error=function(m){throw m};
 tokens=function(input,st){
   var t={},s=0,p=0,w=0,ts=[];
   t.nextChar=function(){
@@ -86,36 +86,29 @@ exports.lex=lex=function(input){
     if(t.accept('/')){t.until('\n');t.ignore();return init}
     else{t.ignore();return init}}
   return tokens(input,init)}
+isNum=function(x){return x.type=='int'||x.type=='float'}
 expr=function(ts){
   if(ts.length==1)return ts[0];
   var st,bind,i=ts.length-1;
   st=function(a,b){
-    return a.type=='int'&&b.type=='int'      ? 5
-          :a.type=='int'&&b.type=='float'    ? 5
-          :a.type=='float'&&b.type=='int'    ? 5
-          :a.type=='float'&&b.type=='float'  ? 5
-          :a.type=='vector'&&b.type=='int'   ? 5
-          :a.type=='vector'&&b.type=='float' ? 5
-          :a.part=='noun'&&b.part=='noun'    ? 1
-          :a.part=='verb'&&b.part=='verb'    ? 1
-          :a.part=='verb'&&b.part=='noun'    ? 2
-          :a.part=='noun'&&b.part=='verb'    ? 3
-          :a.part=='noun'&&b.part=='adverb'  ? 4
-          :a.part=='verb'&&b.part=='adverb'  ? 4
+    return isNum(a)&&isNum(b)               ? 5
+          :a.type=='vector'&&isNum(b)       ? 5
+          :a.part=='noun'&&b.part=='noun'   ? 1
+          :a.part=='verb'&&b.part=='verb'   ? 1
+          :a.part=='verb'&&b.part=='noun'   ? 2
+          :a.part=='noun'&&b.part=='verb'   ? 3
+          :a.part=='noun'&&b.part=='adverb' ? 4
+          :a.part=='verb'&&b.part=='adverb' ? 4
           :0}
   bind=function(a,b){ts.splice(i-1,2,
-     a.type=='int'&&b.type=='int'      ? {type:'vector',part:'noun',values:[a,b]}
-    :a.type=='int'&&b.type=='float'    ? {type:'vector',part:'noun',values:[a,b]}
-    :a.type=='float'&&b.type=='int'    ? {type:'vector',part:'noun',values:[a,b]}
-    :a.type=='float'&&b.type=='float'  ? {type:'vector',part:'noun',values:[a,b]}
-    :a.type=='vector'&&b.type=='int'   ? {type:'vector',part:'noun',values:a.values.concat([b])}
-    :a.type=='vector'&&b.type=='float' ? {type:'vector',part:'noun',values:a.values.concat([b])}
-    :a.part=='noun'&&b.part=='noun'    ? {type:'apply',part:'noun',func:a,arg:b}
-    :a.part=='noun'&&b.part=='verb'    ? {type:'curry',part:'verb',func:b,arg:a}
-    :a.part=='noun'&&b.part=='adverb'  ? {type:'modNoun',part:'verb',mod:b,noun:a}
-    :a.part=='verb'&&b.part=='noun'    ? {type:'applyMonad',part:'noun',func:a,arg:b}
-    :a.part=='verb'&&b.part=='verb'    ? {type:'compose',part:'verb',f:a,g:b}
-    :a.part=='verb'&&b.part=='adverb'  ? {type:'modVerb',part:'verb',mod:b,verb:a}
+     isNum(a)&&isNum(b)               ? {type:'vector',part:'noun',values:[a,b]}
+    :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
+    :a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
+    :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
+    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,noun:a}
+    :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
+    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'verb',f:a,g:b}
+    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,verb:a}
     :error('Invalid operation: '+a.value+' '+b.value))};
   while(ts.length>1){
     i=i>ts.length-1?ts.length-1:i;
@@ -145,15 +138,26 @@ wraps=function(ts){
       return {type:'func',part:'noun',args:args,body:es}})}
   return ts}
 exports.parse=parse=function(src){return exprs(wraps(lex(src)))}
-binop=function(f){return function(R,a){R(f.apply(null,a))}}
+applyBin=function(f,a,b){
+  return typeof a=='number'&&typeof b=='number'                 ? f(a,b)
+        :a.type=='vector'&&typeof b=='number'                   ? a.map(function(x){return f(x,b)})
+        :typeof a=='number'&&b.type=='vector'                   ? b.map(function(y){return f(a,y)})
+        :a.type=='vector'&&b.type=='vector'&&a.length==b.length ? a.map(function(x,i){return f(x,b[i])})
+        :error("Invalid application of binary function to arguments `"+JSON.stringify(a)+"` and `"+JSON.stringify(b)+"`");
+}
+binop=function(f){return function(R,a){R(applyBin(f,a[0],a[1]))}}
 eval=function(tr,r,env){
-  if(typeof tr.type == 'undefined'){r(tr);return}
-  if(tr.type=='apply'||tr.type=='applyMonad'){eval(tr.func,function(f){eval(tr.arg,function(x){f(r,[x])},env)},env);return}
-  if(tr.type=='curry'){eval(tr.func,function(f){eval(tr.arg,function(x){r(function(R,y){f(R,[x,y])})},env)},env);return}
-  if(tr.type=='func'){r(function(R,a){var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)});return}
-  if(tr.type=='star'){r(binop(function(a,b){return a*b}));return}
-  if(tr.type=='word'){eval(env[tr.value],function(rs){r(rs)},{});return}
-  if(tr.type=='int'){r(parseInt(tr.value));return}
-  error('Invalid AST: '+JSON.stringify(tr))}
+  return typeof tr.type == 'undefined'           ? r(tr)
+        :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],function(f,x){f(r,[x])},env)
+        :tr.type=='curry'                        ? evall([tr.func,tr.arg],function(f,x){r(function(R,y){f(R,[x,y[0]])})},env)
+        :tr.type=='func'                         ? r(function(R,a){var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
+        :tr.type=='plus'                         ? r(binop(function(a,b){return a+b}))
+        :tr.type=='star'                         ? r(binop(function(a,b){return a*b}))
+        :tr.type=='vector'                       ? evalv(tr.values,r,env)
+        :tr.type=='word'                         ? eval(env[tr.value],r,{})
+        :tr.type=='int'                          ? r(parseInt(tr.value))
+        :error('Invalid AST: '+JSON.stringify(tr))}
 evals=function(es,r,env){var i=0,next=function(rs){i<es.length?eval(es[i++],next,env):r(rs)};next()}
+evall=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r.apply(null,out)};eval(es[i++],next,env)}
+evalv=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r(out)};out.type='vector';eval(es[i++],next,env)}
 exports.run=function(src,r){var env={},tr=parse(src);evals(tr,r,env)}
