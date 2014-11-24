@@ -1,10 +1,10 @@
-var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('expected',JSON.stringify(ex));err('actually',JSON.stringify(ac))},success=function(){process.stdout.write('.')};
+var v=require('./v'),l=console.log,err=console.error,s=JSON.stringify,diff=function(ex,ac){err('expected',s(ex));err('actually',s(ac))},success=function(){process.stdout.write('.')};
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
     if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);return};
     for(var i=0;i<tokens.length;i++){
-      var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+JSON.stringify(a)+' != '+JSON.stringify(e));return}};
+      var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+s(a)+' != '+s(e));return}};
     success()}
   expect('a b',[{type:'word',value:'a',part:'noun'},{type:'word',value:'b',part:'noun'}]);
   expect('`sym',[{type:'symbol',value:'sym',part:'noun'}]);
@@ -60,7 +60,7 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
     if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);return};
     for(var i=0;i<ast.length;i++){
       var a=ast[i],e=expected[i];
-      if(JSON.stringify(a)!=JSON.stringify(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);return}}
+      if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);return}}
     success()}
   var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
   expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
@@ -121,8 +121,8 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
           func:{type:'curry',part:'verb',
                 func:{type:'plus',value:'+',part:'verb'},
                 arg:{type:'list',part:'noun',
-                     items:[{type:'int',value:'2',part:'noun'},
-                            {type:'int',value:'3',part:'noun'}]}},
+                     values:[{type:'int',value:'2',part:'noun'},
+                             {type:'int',value:'3',part:'noun'}]}},
           arg:{type:'int',value:'4',part:'noun'}}}]);
   expect('[x;y]',[
     {type:'argList',part:'noun',
@@ -163,11 +163,41 @@ var v=require('./v'),l=console.log,err=console.error,diff=function(ex,ac){err('e
 })();
 (function(){
   var expect=function(src,x){
-    var c=false;
-    v.run(src,function(r){c=true;if(JSON.stringify(r)!=JSON.stringify(x)){err('`'+src+'` == '+JSON.stringify(r)+' != '+x);return}success()})
+    var c=0,go=function(){v.run(src,function(r){c=1;if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})};
+    try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
   expect('1 2 3+1 2 3',[2,4,6]);
+  expect('12-1 2 3 4 6',[11,10,9,8,6]);
+  expect('-1',-1);
+  expect('12%1 2 3 4 6',[12,6,4,3,2]);
+  expect('~5',0);
+  expect('~0',1);
+  expect('~0 1 2',[1,0,0]);
+  expect('1 2~1 2',1);
+  expect('1 2~3 3',0);
+  expect('5!3',2);
+  expect('!5',[0,1,2,3,4]);
+  expect('@1',1);
+  expect('@1 2 3',0);
+  expect('2#1 2 3',[1,2]);
+  expect('(-2)#1 2 3',[2,3]);
+  expect('2_1 2 3',[3]);
+  expect('(-2)_1 2 3',[1]);
+  expect('2^3',8);
+  expect('3<5',1);
+  expect('9<5',0);
+  expect('9>5',1);
+  expect('9>15',0);
+  expect('5&9',5);
+  expect('11&9',9);
+  expect('5|11',11);
+  expect('15|11',15);
+  expect('1,15',[1,15]);
+  expect('1,15 30',[1,15,30]);
+  expect(',1',[1]);
+  expect('N',null);
+  expect('(1;2;3)',[1,2,3]);
 })();
