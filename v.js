@@ -183,6 +183,7 @@ eval=function(tr,r,env){
         :tr.type=='vector'                       ? evalv(tr.values,r,env)
         :tr.type=='list'                         ? evalv(tr.values,r,env)
         :tr.type=='word'                         ? eval(env[tr.value],r,{})
+        :tr.type=='symbol'                       ? r({type:'symbol',value:tr.value})
         :tr.type=='int'                          ? r(parseInt(tr.value))
         :tr.type=='nil'                          ? r(null)
         :ops[tr.type]                            ? r(ops[tr.type])

@@ -200,4 +200,5 @@ var v=require('./v'),l=console.log,err=console.error,s=JSON.stringify,diff=funct
   expect(',1',[1]);
   expect('N',null);
   expect('(1;2;3)',[1,2,3]);
+  expect('`hello',{type:'symbol',value:'hello'});
 })();
