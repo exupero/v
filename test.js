@@ -1,4 +1,4 @@
-var v=require('./v'),l=console.log,err=console.error,s=JSON.stringify,diff=function(ex,ac){err('expected',s(ex));err('actually',s(ac))},success=function(){process.stdout.write('.')};
+var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');console.error(v)},s=JSON.stringify,diff=function(ex,ac){err('expected',s(ex));err('actually',s(ac))},success=function(){process.stdout.write('.')};
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
@@ -163,9 +163,16 @@ var v=require('./v'),l=console.log,err=console.error,s=JSON.stringify,diff=funct
 })();
 (function(){
   var expect=function(src,x){
-    var c=0,go=function(){v.run(src,function(r){c=1;if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})};
-    try{go()}catch(e){err(e)}
-    if(!c)err('`'+src+'` does not return a result')}
+    if(Object.prototype.toString.call(x)=='[object Array]'){
+      var c=0,go=function(){v.run(src,function(r){
+        c=1;rr=[];while(r.length()>0){rr.push(r.first());r=r.next();}
+        if(s(rr)!=s(x)){err('`'+src+'` == '+s(rr)+' != '+s(x));return}success()})}
+      try{go()}catch(e){err(e)}
+      if(!c)err('`'+src+'` does not return a result')}
+    else{
+      var c=0,go=function(){v.run(src,function(r){c=1;if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})}
+      try{go()}catch(e){err(e)}
+      if(!c)err('`'+src+'` does not return a result')}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
@@ -202,3 +209,4 @@ var v=require('./v'),l=console.log,err=console.error,s=JSON.stringify,diff=funct
   expect('(1;2;3)',[1,2,3]);
   expect('`hello',{type:'symbol',value:'hello'});
 })();
+process.stdout.write('\n');

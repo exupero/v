@@ -1,4 +1,7 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalv,ops,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m};
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,ops,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},fac,bl=function(x){return x&1},numq=function(x){return typeof x=='number'},seqq=function(x){return fac(x,['next','first','length','cons','conj'])},vf=Array.prototype.slice,seq,inval,invals,op,vop,vdo,reduce,map,take,drop,concat,udf=void 0;
+fac=function(x,ms){return ms.every(function(m){return typeof x[m]=='function'})}
+inval=function(s,a){error("Invalid argument for "+s+": `"+json(a)+"`")}
+invals=function(s,a,b){error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
 tokens=function(input,st){
   var t={},s=0,p=0,w=0,ts=[];
   t.nextChar=function(){
@@ -138,22 +141,40 @@ wraps=function(ts){
       return {type:'func',part:'noun',args:args,body:es}})}
   return ts}
 exports.parse=parse=function(src){return exprs(wraps(lex(src)))}
-var bl=function(x){return x&1},n=function(x){return typeof x=='number'},v=function(x){return x.type=='vector'},inval,invals,op,vop,vdo;
-inval=function(s,a){error("Invalid argument for "+s+": `"+json(a)+"`")}
-invals=function(s,a,b){error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
+seq=function(xs){return {
+  next:function(){return seq(xs.slice(1))},
+  first:function(){return xs[0]},
+  length:function(){return xs.length},
+  cons:function(x){return seq([x].concat(xs))},
+  conj:function(x){return seq(xs.concat([x]))},
+}}
 op=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(null,a))}}
-vop=function(a,b){return typeof b=='undefined'?n(a)||v(a):vop(a)&&vop(b)}
+vop=function(a,b){return typeof b=='undefined'?numq(a)||seqq(a):vop(a)&&vop(b)}
+reduce=function(f,m){
+  var args=vf.call(arguments,2);
+  while(args.every(function(a){return a.length()>0})){
+    m=f.apply(null,[m].concat(args.map(function(a){return a.first()})));
+    args=args.map(function(a){return a.next();})}
+  return m}
+map=function(f){return reduce.apply(null,[function(m){return m.conj(f.apply(null,vf.call(arguments,1)))},seq([])].concat(vf.call(arguments,1)))}
 vdo=function(f,a,b){
-  if(typeof b=='undefined')return n(a)?f(a):v(a)?a.map(f):void 0;
-  return n(a)&&n(b)                     ? f(a,b)
-        :v(a)&&n(b)                     ? a.map(function(x){return f(x,b)})
-        :n(a)&&v(b)                     ? b.map(function(y){return f(a,y)})
-        :v(a)&&v(b)&&a.length==b.length ? a.map(function(x,i){return f(x,b[i])})
-        :void 0}
+  if(typeof b=='undefined')return numq(a)?f(a):seqq(a)?map(f,a):udf;
+  return numq(a)&&numq(b)?f(a,b):seqq(a)&&numq(b)?map(function(x){return f(x,b)},a):numq(a)&&seqq(b)?map(function(y){return f(a,y)},b):seqq(a)&&seqq(b)?map(f,a,b):udf}
+drop=function(n,xs){
+  var l=xs.length();
+  if(n>=0){for(var i=0;i<n;i++)xs=xs.next();return xs}
+  else if(l)return take(l+n,xs);
+  else inval('Cannot drop from end of sequence with undefined end')}
+take=function(n,xs){
+  var l=xs.length();
+  if(n>=0){ys=seq([]);for(var i=0;i<n;i++)ys=ys.conj(xs.first()),xs=xs.next();return ys}
+  else if(l)return drop(l+n,xs);
+  else inval('Cannot take from end of sequence with undefined end')}
+concat=function(xs,ys){while(ys.length()>0){xs.conj(ys.first());ys.next()}return xs}
 ops={
   tilde:op(
     function(a){return vop(a)?vdo(function(x){return bl(!x)},a):inval('~',a)},
-    function(a,b){return n(a)&&n(b)?a==b:v(a)&&v(b) ? bl(a.length==b.length&&a.every(function(x,i){return x==b[i]})):invals('~',a,b)}),
+    function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(a.length()==b.length()&&reduce(function(m,x,y){return m&&x==y},true,a,b)):invals('~',a,b)}),
   plus:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
   dash:op(
     function(a){return vop(a)?vdo(function(x){return -x},a):inval('-',a)},
@@ -161,27 +182,27 @@ ops={
   star:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
   percent:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
   bang:op(
-    function(a){return n(a)?function(){var i=0,out=[];for(;i<a;i++)out.push(i);return out}():ival('!',a)},
-    function(a,b){return n(a)&&n(b)?a%b:invals('!',a,b)}),
-  at:op(function(a){return bl(n(a))}),
-  hash:op(null,function(a,b){return n(a)&&v(b)?(a>0?b.slice(0,a):b.slice(b.length+a)):invals('#',a,b)}),
-  under:op(null,function(a,b){return n(a)&&v(b)?(a>0?b.slice(a):b.slice(0,b.length+a)):invals('_',a,b)}),
+    function(a){return numq(a)?function(){var i=0,out=seq([]);for(;i<a;i++)out=out.conj(i);return out}():ival('!',a)},
+    function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
+  at:op(function(a){return bl(numq(a))}),
+  hash:op(null,function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
+  under:op(null,function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
   caret:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
   langle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
   rangle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
   amp:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
   pipe:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
   comma:op(
-    function(a){return n(a)?[a]:inval(',',a)},
-    function(a,b){return n(a)&&n(b)?[a,b]:n(a)&&v(b)?[a].concat(b):v(a)&&n(b)?a.concat([b]):v(a)&&v(b)?a.concat(b):invals(',',a,b)}),
+    function(a){return numq(a)?seq([a]):inval(',',a)},
+    function(a,b){return numq(a)&&numq(b)?seq([a,b]):numq(a)&&seqq(b)?b.cons(a):seqq(a)&&numq(b)?a.conj(b):seqq(a)&&seqq(b)?concat(a,b):invals(',',a,b)}),
 }
 eval=function(tr,r,env){
   return typeof tr.type == 'undefined'           ? r(tr)
         :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],function(f,x){f(r,[x])},env)
         :tr.type=='curry'                        ? evall([tr.func,tr.arg],function(f,x){r(function(R,y){f(R,[x,y[0]])})},env)
         :tr.type=='func'                         ? r(function(R,a){var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
-        :tr.type=='vector'                       ? evalv(tr.values,r,env)
-        :tr.type=='list'                         ? evalv(tr.values,r,env)
+        :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
+        :tr.type=='list'                         ? evalSeq(tr.values,r,env)
         :tr.type=='word'                         ? eval(env[tr.value],r,{})
         :tr.type=='symbol'                       ? r({type:'symbol',value:tr.value})
         :tr.type=='int'                          ? r(parseInt(tr.value))
@@ -190,5 +211,5 @@ eval=function(tr,r,env){
         :error('Invalid AST: '+json(tr))}
 evals=function(es,r,env){var i=0,next=function(rs){i<es.length?eval(es[i++],next,env):r(rs)};next()}
 evall=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r.apply(null,out)};eval(es[i++],next,env)}
-evalv=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r(out)};out.type='vector';eval(es[i++],next,env)}
+evalSeq=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r(seq(out))};eval(es[i++],next,env)}
 exports.run=function(src,r){var env={},tr=parse(src);evals(tr,r,env)}

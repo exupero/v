@@ -17,8 +17,11 @@
 
 # sequence
 
+- first
 - next
-- done
+- length
+- cons
+- conj
 
 # collection
 
