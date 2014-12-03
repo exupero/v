@@ -45,12 +45,10 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
     {type:'eachPair',value:"':",part:'adverb'},
     {type:'each',value:"'",part:'adverb'},
     {type:'word',value:'ello',part:'noun'}]);
-  expect("abCDNL Ci Di Ni Li",[
-    {type:'word',value:'abCDNL',part:'noun'},
+  expect("abCN Ci Ni",[
+    {type:'word',value:'abCN',part:'noun'},
     {type:'channel',value:'C',part:'noun'},{type:'word',value:'i',part:'noun'},
-    {type:'dict',value:'D',part:'verb'},{type:'word',value:'i',part:'noun'},
-    {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'},
-    {type:'lazy',value:'L',part:'verb'},{type:'word',value:'i',part:'noun'}]);
+    {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'}]);
   expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:'semi',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
   expect("abc / this",[{type:'word',value:'abc',part:'noun'}]);
 })();
@@ -124,6 +122,13 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
                      values:[{type:'int',value:'2',part:'noun'},
                              {type:'int',value:'3',part:'noun'}]}},
           arg:{type:'int',value:'4',part:'noun'}}}]);
+  expect('(2;(3;4);5)',[
+    {type:'list',part:'noun',
+     values:[{type:'int',value:'2',part:'noun'},
+             {type:'list',part:'noun',
+              values:[{type:'int',value:'3',part:'noun'},
+                      {type:'int',value:'4',part:'noun'}]},
+             {type:'int',value:'5',part:'noun'}]}]);
   expect('[x;y]',[
     {type:'argList',part:'noun',
       args:[{type:'word',value:'x',part:'noun'},

@@ -25,6 +25,7 @@
 
 # collection
 
+- get
 - assoc
 - dissoc
 

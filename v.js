@@ -66,9 +66,7 @@ exports.lex=lex=function(input){
         case '{':e('lace');break;
         case '}':e('race');break;
         case 'C':e('channel','noun');break;
-        case 'D':e('dict','verb');break;
         case 'N':e('nil','noun');break;
-        case 'L':e('lazy','verb');break;
         case '\n':e('semi');break;
         default:t.backup();return t.accept(digits)?number:word}}}
   word=function(t){t.until(stop);t.emit('word','noun');return init}
