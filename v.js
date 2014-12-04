@@ -126,15 +126,12 @@ exprs=function(ts){
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   return ts}
 wraps=function(ts){
-  var stack=[],i,t,es,unmatched=function(v){throw 'Unmatched `'+v+'`'},
-      li=function(type){var l=stack.pop();if(l.type!=type)unmatched(l.value);return l.i},
-      body=function(ld,f){var j=li(ld),tss=ts.slice(j+1,i),tss2=tss.slice();ts.splice(j,i-j+1,f(exprs(tss),tss2))}
-  for(i=0;i<ts.length;i++){
+  var i=ts.length-1,t,find=function(ty,f){for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));return}unmatched(t.type)};
+  for(i=ts.length-1;i>=0;i--){
     t=ts[i];
-    if(t.type=='laren'||t.type=='lacket'||t.type=='lace')stack.push({i:i,type:t.type,value:t.value});
-    else if(t.type=='raren')body('laren',function(es){return es.length==1?es[0]:{type:'list',part:'noun',values:es}});
-    else if(t.type=='racket')body('lacket',function(es){return {type:'argList',part:'noun',args:es}});
-    else if(t.type=='race')body('lace',function(es,tss){
+    if(t.type=='laren')find('raren',function(es){return es.length==1?es[0]:{type:'list',part:'noun',values:es}});
+    else if(t.type=='lacket')find('racket',function(es){return {type:'argList',part:'noun',args:es}});
+    else if(t.type=='lace')find('race',function(es,tss){
       var args=tss.filter(function(t){return t.type=='word'&&(t.value=='x'||t.value=='y'||t.value=='z')}).map(function(t){return t.value});
       return {type:'func',part:'noun',args:args,body:es}})}
   return ts}
@@ -144,8 +141,7 @@ seq=function(xs){return {
   first:function(){return xs[0]},
   length:function(){return xs.length},
   cons:function(x){return seq([x].concat(xs))},
-  conj:function(x){return seq(xs.concat([x]))},
-}}
+  conj:function(x){return seq(xs.concat([x]))}}}
 op=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(null,a))}}
 vop=function(a,b){return typeof b=='undefined'?numq(a)||seqq(a):vop(a)&&vop(b)}
 reduce=function(f,m){

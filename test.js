@@ -167,17 +167,12 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
                   {type:'int',value:'3',part:'noun'}]}}]);
 })();
 (function(){
-  var expect=function(src,x){
-    if(Object.prototype.toString.call(x)=='[object Array]'){
-      var c=0,go=function(){v.run(src,function(r){
-        c=1;rr=[];while(r.length()>0){rr.push(r.first());r=r.next();}
-        if(s(rr)!=s(x)){err('`'+src+'` == '+s(rr)+' != '+s(x));return}success()})}
-      try{go()}catch(e){err(e)}
-      if(!c)err('`'+src+'` does not return a result')}
-    else{
-      var c=0,go=function(){v.run(src,function(r){c=1;if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})}
-      try{go()}catch(e){err(e)}
-      if(!c)err('`'+src+'` does not return a result')}}
+  var ar=function(s){if(s.length&&s.first&&s.next){var a=[];while(s.length()>0){a.push(ar(s.first()));s=s.next()}return a}return s},
+      expect=function(src,x){
+    var c=0,
+      go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})}
+    try{go()}catch(e){err(e)}
+    if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
@@ -213,5 +208,6 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect('N',null);
   expect('(1;2;3)',[1,2,3]);
   expect('`hello',{type:'symbol',value:'hello'});
+  expect('((1;2);(3;4))',[[1,2],[3,4]]);
 })();
 process.stdout.write('\n');
