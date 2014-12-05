@@ -52,6 +52,7 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:'semi',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
   expect("abc / this",[{type:'word',value:'abc',part:'noun'}]);
 })();
+
 (function(){
   var expect=function(src,expected){
     try{var ast=v.parse(src)}catch(e){err('Error parsing `'+src+'`: '+e);return}
@@ -166,12 +167,13 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
                   {type:'int',value:'2',part:'noun'},
                   {type:'int',value:'3',part:'noun'}]}}]);
 })();
+
 (function(){
   var ar=function(s){if(s.length&&s.first&&s.next){var a=[];while(s.length()>0){a.push(ar(s.first()));s=s.next()}return a}return s},
       expect=function(src,x){
     var c=0,
-      go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()})}
-    try{go()}catch(e){err(e)}
+      go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
+    go();//try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -207,7 +209,8 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect(',1',[1]);
   expect('N',null);
   expect('(1;2;3)',[1,2,3]);
-  expect('`hello',{type:'symbol',value:'hello'});
   expect('((1;2);(3;4))',[[1,2],[3,4]]);
+  expect('(D((`a;1);(`b;2)))`a',1);
+  expect('(D((`a;1);(`b;2)))`b',2);
 })();
 process.stdout.write('\n');
