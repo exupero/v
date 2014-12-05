@@ -13,7 +13,7 @@
 
 # function
 
-- apply
+- call
 
 # sequence
 

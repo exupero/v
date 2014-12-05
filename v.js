@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},fac,bl=function(x){return x&1},numq=function(x){return typeof x=='number'},seqq=function(x){return fac(x,['next','first','length','cons','conj'])},vf=Array.prototype.slice,aTs,inval,invals,op,vop,vdo,reduce,map,take,drop,concat,udf=void 0;
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},fac,bl=function(x){return x&1},numq=function(x){return typeof x=='number'},seqq=function(x){return fac(x,['next','first','length','cons','conj'])},vf=Array.prototype.slice,aTs,inval,invals,op,vop,vdo,reduce,map,take,drop,concat,reverse,udf=void 0;
 fac=function(x,ms){return ms.every(function(m){return typeof x[m]=='function'})}
 inval=function(s,a){error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=function(s,a,b){error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
@@ -150,6 +150,8 @@ exports.run=function(src,r,ops){
           :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})
           :tr.type=='symbol'                       ? r({type:'symbol',value:tr.value})
           :tr.type=='int'                          ? r(parseInt(tr.value))
+          :tr.type=='float'                        ? r(parseFloat(tr.value))
+          :tr.type=='string'                       ? r(tr.value)
           :tr.type=='nil'                          ? r(null)
           :ops[tr.type]                            ? r(ops[tr.type])
           :error('Invalid AST: '+json(tr))}
@@ -185,30 +187,55 @@ take=function(n,xs){
   if(n>=0){ys=aTs([]);for(var i=0;i<n;i++)ys=ys.conj(xs.first()),xs=xs.next();return ys}
   else if(l)return drop(l+n,xs);
   else inval('Cannot take from end of sequence with undefined end')}
-concat=function(xs,ys){while(ys.length()>0){xs.conj(ys.first());ys.next()}return xs}
+concat=function(xs,ys){while(ys.length()>0)xs=xs.conj(ys.first()),ys=ys.next();return xs}
+reverse=function(xs){var ys=aTs([]);while(xs.length()>0)ys=ys.cons(xs.first()),xs=xs.next();return ys}
 op=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(null,a))}}
 exports.defaultOps={
   tilde:op(
     function(a){return vop(a)?vdo(function(x){return bl(!x)},a):inval('~',a)},
-    function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(a.length()==b.length()&&reduce(function(m,x,y){return m&&x==y},true,a,b)):invals('~',a,b)}),
+    function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(a.length()==b.length()&&reduce(function(m,x,y){return m&&x==y},1,a,b)):invals('~',a,b)}),
   plus:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
   dash:op(
     function(a){return vop(a)?vdo(function(x){return -x},a):inval('-',a)},
     function(a,b){return vop(a,b)?vdo(function(x,y){return x-y},a,b):invals('-',a,b)}),
   star:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
-  percent:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
+  percent:op(
+    function(a){return vop(a)?vdo(function(x){return 1/x},a):inval('%',a)},
+    function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
   bang:op(
     function(a){return numq(a)?function(){var i=0,out=aTs([]);for(;i<a;i++)out=out.conj(i);return out}():ival('!',a)},
     function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
-  at:op(function(a){return bl(numq(a))}),
-  hash:op(null,function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
-  under:op(null,function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
+  at:op(function(a){return bl(numq(a)||a.type=='symbol')}),
+  hash:op(
+    function(a){return seqq(a)?a.length():inval('#',a)},
+    function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
+  under:op(
+    function(a){return vop(a)?vdo(function(x){return Math.floor(x)},a):inval('_',a)},
+    function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
   caret:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
   langle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
   rangle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
   amp:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
-  pipe:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
+  pipe:op(
+    function(a){return seqq(a)?reverse(a):inval('|',a)},
+    function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
+  equals:op(null,
+    function(a,b){
+      return vop(a,b)?vdo(function(x,y){return bl(x==y)},a,b)
+            :typeof a=='string'&&typeof b=='string'?bl(a==b)
+            :a.type=='symbol'&&b.type=='symbol'?bl(a.value==b.value)
+            :0}),
   comma:op(
     function(a){return numq(a)?aTs([a]):inval(',',a)},
-    function(a,b){return numq(a)&&numq(b)?aTs([a,b]):numq(a)&&seqq(b)?b.cons(a):seqq(a)&&numq(b)?a.conj(b):seqq(a)&&seqq(b)?concat(a,b):invals(',',a,b)}),
+    function(a,b){
+      return numq(a)&&numq(b)?aTs([a,b])
+            :numq(a)&&seqq(b)?b.cons(a)
+            :seqq(a)&&numq(b)?a.conj(b)
+            :seqq(a)&&seqq(b)?concat(a,b)
+            :invals(',',a,b)}),
+  D:function(R,ps){
+    ps=ps[0];var p=ps;while(p.length()>0){if(p.first().first().type!='symbol')return error('Dict with non-symbol keys');p=p.next()}
+    R({call:function(_,r,a){if(a[0].type!='symbol')return error('Dict lookup with non-symbol '+k);var p=ps,k=a[0].value;
+      while(p.length()>0){if(p.first().first().value==k)return r(p.first().next().first());p=p.next()}r(null)},
+  })},
 }

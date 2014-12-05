@@ -173,7 +173,7 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
       expect=function(src,x){
     var c=0,
       go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
-    go();//try{go()}catch(e){err(e)}
+    try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -182,6 +182,8 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect('12-1 2 3 4 6',[11,10,9,8,6]);
   expect('-1',-1);
   expect('12%1 2 3 4 6',[12,6,4,3,2]);
+  expect('%2',0.5);
+  expect('%2 4 8 16',[0.5,0.25,0.125,0.0625]);
   expect('~5',0);
   expect('~0',1);
   expect('~0 1 2',[1,0,0]);
@@ -191,8 +193,14 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect('!5',[0,1,2,3,4]);
   expect('@1',1);
   expect('@1 2 3',0);
+  expect('@`sym',1);
+  expect('@0.1',1);
+  expect('@(1;2)',0);
+  expect('#1 2 3 4',4);
   expect('2#1 2 3',[1,2]);
   expect('(-2)#1 2 3',[2,3]);
+  expect('_2.1',2);
+  expect('_2.1 5.6',[2,5]);
   expect('2_1 2 3',[3]);
   expect('(-2)_1 2 3',[1]);
   expect('2^3',8);
@@ -204,8 +212,17 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect('11&9',9);
   expect('5|11',11);
   expect('15|11',15);
+  expect('|1 2 3',[3,2,1]);
+  expect('15=15',1);
+  expect('15=14',0);
+  expect('2=0 1 2 3',[0,0,1,0]);
+  expect('"a"="a"',1);
+  expect('"a"="b"',0);
+  expect('`a=`a',1);
+  expect('`a=`b',0);
   expect('1,15',[1,15]);
   expect('1,15 30',[1,15,30]);
+  expect('2 4,1 5',[2,4,1,5]);
   expect(',1',[1]);
   expect('N',null);
   expect('(1;2;3)',[1,2,3]);
