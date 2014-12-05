@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},fac,bl=function(x){return x&1},numq=function(x){return typeof x=='number'},seqq=function(x){return fac(x,['next','first','length','cons','conj'])},vf=Array.prototype.slice,aTs,inval,invals,op,vop,vdo,reduce,map,take,drop,concat,reverse,udf=void 0;
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},fac,bl=function(x){return x&1},numq=function(x){return typeof x=='number'},seqq=function(x){return fac(x,['next','first','length','cons','conj'])},vf=Array.prototype.slice,aTs,inval,invals,arit,vop,vdo,reduce,map,take,drop,concat,reverse,udf=void 0,N=null;
 fac=function(x,ms){return ms.every(function(m){return typeof x[m]=='function'})}
 inval=function(s,a){error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=function(s,a,b){error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
@@ -23,7 +23,7 @@ tokens=function(input,st){
   t.done=function(){return this.peek()==eof}
   t.ignore=function(){s=p}
   t.emit=function(type,part,f){ts.push({type:type,value:(f||function(x){return x})(input.slice(s,p)),part:part});s=p}
-  while(st!=null)st=st(t);return ts}
+  while(st!=N)st=st(t);return ts}
 
 exports.lex=lex=function(input){
   var init,word,symbol,number,string,each,space;
@@ -142,7 +142,7 @@ exports.parse=parse=function(src){return exprs(wraps(lex(src)))}
 exports.run=function(src,r,ops){
   eval=function(tr,r,env){
     return typeof tr.type == 'undefined'           ? r(tr)
-          :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],function(f,x){f.call(null,r,[x])},env)
+          :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],function(f,x){f.call(N,r,[x])},env)
           :tr.type=='curry'                        ? evall([tr.func,tr.arg],function(f,x){r(function(R,y){f(R,[x,y[0]])})},env)
           :tr.type=='func'                         ? r(function(R,a){var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
           :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
@@ -152,11 +152,11 @@ exports.run=function(src,r,ops){
           :tr.type=='int'                          ? r(parseInt(tr.value))
           :tr.type=='float'                        ? r(parseFloat(tr.value))
           :tr.type=='string'                       ? r(tr.value)
-          :tr.type=='nil'                          ? r(null)
+          :tr.type=='nil'                          ? r(N)
           :ops[tr.type]                            ? r(ops[tr.type])
           :error('Invalid AST: '+json(tr))}
   evals=function(es,r,env){var i=0,next=function(rs){i<es.length?eval(es[i++],next,env):r(rs)};next()}
-  evall=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r.apply(null,out)};eval(es[i++],next,env)}
+  evall=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r.apply(N,out)};eval(es[i++],next,env)}
   evalSeq=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r(aTs(out))};eval(es[i++],next,env)}
   evals(parse(src),r,{})}
 
@@ -170,10 +170,10 @@ vop=function(a,b){return typeof b=='undefined'?numq(a)||seqq(a):vop(a)&&vop(b)}
 reduce=function(f,m){
   var args=vf.call(arguments,2);
   while(args.every(function(a){return a.length()>0})){
-    m=f.apply(null,[m].concat(args.map(function(a){return a.first()})));
+    m=f.apply(N,[m].concat(args.map(function(a){return a.first()})));
     args=args.map(function(a){return a.next();})}
   return m}
-map=function(f){return reduce.apply(null,[function(m){return m.conj(f.apply(null,vf.call(arguments,1)))},aTs([])].concat(vf.call(arguments,1)))}
+map=function(f){return reduce.apply(N,[function(m){return m.conj(f.apply(N,vf.call(arguments,1)))},aTs([])].concat(vf.call(arguments,1)))}
 vdo=function(f,a,b){
   if(typeof b=='undefined')return numq(a)?f(a):seqq(a)?map(f,a):udf;
   return numq(a)&&numq(b)?f(a,b):seqq(a)&&numq(b)?map(function(x){return f(x,b)},a):numq(a)&&seqq(b)?map(function(y){return f(a,y)},b):seqq(a)&&seqq(b)?map(f,a,b):udf}
@@ -183,49 +183,50 @@ drop=function(n,xs){
   else if(l)return take(l+n,xs);
   else inval('Cannot drop from end of sequence with undefined end')}
 take=function(n,xs){
-  var l=xs.length();
+  var ys,l=xs.length();
   if(n>=0){ys=aTs([]);for(var i=0;i<n;i++)ys=ys.conj(xs.first()),xs=xs.next();return ys}
   else if(l)return drop(l+n,xs);
   else inval('Cannot take from end of sequence with undefined end')}
 concat=function(xs,ys){while(ys.length()>0)xs=xs.conj(ys.first()),ys=ys.next();return xs}
 reverse=function(xs){var ys=aTs([]);while(xs.length()>0)ys=ys.cons(xs.first()),xs=xs.next();return ys}
-op=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(null,a))}}
+
+arit=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(N,a))}}
 exports.defaultOps={
-  tilde:op(
+  tilde:arit(
     function(a){return vop(a)?vdo(function(x){return bl(!x)},a):inval('~',a)},
     function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(a.length()==b.length()&&reduce(function(m,x,y){return m&&x==y},1,a,b)):invals('~',a,b)}),
-  plus:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
-  dash:op(
+  plus:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
+  dash:arit(
     function(a){return vop(a)?vdo(function(x){return -x},a):inval('-',a)},
     function(a,b){return vop(a,b)?vdo(function(x,y){return x-y},a,b):invals('-',a,b)}),
-  star:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
-  percent:op(
+  star:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
+  percent:arit(
     function(a){return vop(a)?vdo(function(x){return 1/x},a):inval('%',a)},
     function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
-  bang:op(
+  bang:arit(
     function(a){return numq(a)?function(){var i=0,out=aTs([]);for(;i<a;i++)out=out.conj(i);return out}():ival('!',a)},
     function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
-  at:op(function(a){return bl(numq(a)||a.type=='symbol')}),
-  hash:op(
+  at:arit(function(a){return bl(numq(a)||a.type=='symbol')}),
+  hash:arit(
     function(a){return seqq(a)?a.length():inval('#',a)},
     function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
-  under:op(
+  under:arit(
     function(a){return vop(a)?vdo(function(x){return Math.floor(x)},a):inval('_',a)},
     function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
-  caret:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
-  amp:op(null,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
-  pipe:op(
+  caret:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
+  langle:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
+  rangle:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
+  amp:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
+  pipe:arit(
     function(a){return seqq(a)?reverse(a):inval('|',a)},
     function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
-  equals:op(null,
+  equals:arit(N,
     function(a,b){
       return vop(a,b)?vdo(function(x,y){return bl(x==y)},a,b)
             :typeof a=='string'&&typeof b=='string'?bl(a==b)
             :a.type=='symbol'&&b.type=='symbol'?bl(a.value==b.value)
             :0}),
-  comma:op(
+  comma:arit(
     function(a){return numq(a)?aTs([a]):inval(',',a)},
     function(a,b){
       return numq(a)&&numq(b)?aTs([a,b])
@@ -236,6 +237,6 @@ exports.defaultOps={
   D:function(R,ps){
     ps=ps[0];var p=ps;while(p.length()>0){if(p.first().first().type!='symbol')return error('Dict with non-symbol keys');p=p.next()}
     R({call:function(_,r,a){if(a[0].type!='symbol')return error('Dict lookup with non-symbol '+k);var p=ps,k=a[0].value;
-      while(p.length()>0){if(p.first().first().value==k)return r(p.first().next().first());p=p.next()}r(null)},
+      while(p.length()>0){if(p.first().first().value==k)return r(p.first().next().first());p=p.next()}r(N)},
   })},
 }
