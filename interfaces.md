@@ -30,6 +30,10 @@
 - assoc
 - dissoc
 
+# dict
+
+sequence + collection
+
 # channel
 
 - put

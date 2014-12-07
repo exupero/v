@@ -5,54 +5,54 @@ Mathematical verbs are all atomic.
 ~ (invert)
   ~number
   ~sequenceOfNumbers
-  ~collectionOfNumbers
+  ~dictOfNumbers
 + (add)
   number+number
   number+sequenceOfNumbers
-  number+collectionOfNumbers
+  number+dictOfNumbers
   number+channelOfNumbers
   sequenceOfNumbers+number
   sequenceOfNumbers+sequenceOfNumbers
-  collectionOfNumbers+number
-  collectionOfNumbers+collectionOfNumbers
+  dictOfNumbers+number
+  dictOfNumbers+dictOfNumbers
   channelOfNumbers+number
   channelOfNumbers+channelOfNumbers
 - (subtract)
   -number
   number-number
   number-sequenceOfNumbers
-  number-collectionOfNumbers
+  number-dictOfNumbers
   number-channelOfNumbers
   -sequenceOfNumbers
   sequenceOfNumbers-number
   sequenceOfNumbers-sequenceOfNumbers
-  -collectionOfNumbers
-  collectionOfNumbers-number
-  collectionOfNumbers-collectionOfNumbers
+  -dictOfNumbers
+  dictOfNumbers-number
+  dictOfNumbers-dictOfNumbers
   -channelOfNumbers
   channelOfNumbers-number
   channelOfNumbers-channelOfNumbers
 * (multiply)
   number*number
   number*sequenceOfNumbers
-  number*collectionOfNumbers
+  number*dictOfNumbers
   number*channelOfNumbers
   sequenceOfNumbers*number
   sequenceOfNumbers*sequenceOfNumbers
-  collectionOfNumbers*number
-  collectionOfNumbers*collectionOfNumbers
+  dictOfNumbers*number
+  dictOfNumbers*dictOfNumbers
   channelOfNumbers*number
   channelOfNumbers*channelOfNumbers
 % (divide)
   %number (reciprocal)
   number%number
   number%sequenceOfNumbers
-  number%collectionOfNumbers
+  number%dictOfNumbers
   number%channelOfNumbers
   sequenceOfNumbers%number
   sequenceOfNumbers%sequenceOfNumbers
-  collectionOfNumbers%number
-  collectionOfNumbers%collectionOfNumbers
+  dictOfNumbers%number
+  dictOfNumbers%dictOfNumbers
   channelOfNumbers%number
   channelOfNumbers%channelOfNumbers
 ! (residue)
@@ -60,89 +60,89 @@ Mathematical verbs are all atomic.
 ^ (power)
   number^number
   number^sequenceOfNumbers
-  number^collectionOfNumbers
+  number^dictOfNumbers
   number^channelOfNumbers
   sequenceOfNumbers^number
   sequenceOfNumbers^sequenceOfNumbers
-  collectionOfNumbers^number
-  collectionOfNumbers^collectionOfNumbers
+  dictOfNumbers^number
+  dictOfNumbers^dictOfNumbers
   channelOfNumbers^number
   channelOfNumbers^channelOfNumbers
 & (min/and)
   number&number
   number&sequenceOfNumbers
-  number&collectionOfNumbers
+  number&dictOfNumbers
   number&channelOfNumbers
   sequenceOfNumbers&number
   sequenceOfNumbers&sequenceOfNumbers
-  collectionOfNumbers&number
-  collectionOfNumbers&collectionOfNumbers
+  dictOfNumbers&number
+  dictOfNumbers&dictOfNumbers
   channelOfNumbers&number
   channelOfNumbers&channelOfNumbers
 | (max/or)
   number|number
   number|sequenceOfNumbers
-  number|collectionOfNumbers
+  number|dictOfNumbers
   number|channelOfNumbers
   sequenceOfNumbers|number
   sequenceOfNumbers|sequenceOfNumbers
-  collectionOfNumbers|number
-  collectionOfNumbers|collectionOfNumbers
+  dictOfNumbers|number
+  dictOfNumbers|dictOfNumbers
   channelOfNumbers|number
   channelOfNumbers|channelOfNumbers
 < (less)
   number<number
   number<sequenceOfNumbers
-  number<collectionOfNumbers
+  number<dictOfNumbers
   number<channelOfNumbers
   sequenceOfNumbers<number
   sequenceOfNumbers<sequenceOfNumbers
-  collectionOfNumbers<number
-  collectionOfNumbers<collectionOfNumbers
+  dictOfNumbers<number
+  dictOfNumbers<dictOfNumbers
   channelOfNumbers<number
   channelOfNumbers<channelOfNumbers
 > (more)
   number>number
   number>sequenceOfNumbers
-  number>collectionOfNumbers
+  number>dictOfNumbers
   number>channelOfNumbers
   sequenceOfNumbers>number
   sequenceOfNumbers>sequenceOfNumbers
-  collectionOfNumbers>number
-  collectionOfNumbers>collectionOfNumbers
+  dictOfNumbers>number
+  dictOfNumbers>dictOfNumbers
   channelOfNumbers>number
   channelOfNumbers>channelOfNumbers
 = (equals)
   number=number
   number=sequenceOfNumbers
-  number=collectionOfNumbers
+  number=dictOfNumbers
   number=channelOfNumbers
   sequenceOfNumbers=number
   sequenceOfNumbers=sequenceOfNumbers
-  collectionOfNumbers=number
-  collectionOfNumbers=collectionOfNumbers
+  dictOfNumbers=number
+  dictOfNumbers=dictOfNumbers
   channelOfNumbers=number
   channelOfNumbers=channelOfNumbers
 _ (floor)
   _number
   _sequenceOfNumbers
-  _collectionOfNumbers
+  _dictOfNumbers
   _channelOfNumbers
 
 # Non-mathematical verbs
 
 ~
   sequence~sequence -> left matches right
-  collection~collection -> keys and values of left match right
+  dict~dict -> keys and values of left match right
 !
   !number -> enumerate
   symbol!any -> function that assocs value right at key left in its argument
-  collection!(key;value) -> assoc value at key in left
+  dict!(key;value) -> assoc value at key in left
   any!channel -> put left on right
   channel!any -> put right on left
 @
   @any -> is an atom
-  symbol@collection -> function that returns value in right at key left
+  symbol@dict -> function that returns value in right at key left
   function@any -> call left with single value right
   node@(key;value) -> set key attribute of left to value
   object@(key;value) -> invoke key method on left with value
@@ -150,7 +150,7 @@ _ (floor)
   #sequence -> length
   number#sequence -> take left items from right, from start if left is positive, from end if left is negative
   sequenceOfIntegers#sequence -> reshape right according to left
-  #collection -> number of key/value pairs
+  #dict -> number of key/value pairs
   #channel -> whether channel is open or closed
 $
   $number -> as string
@@ -158,8 +158,8 @@ $
   $sequence -> as JSON
   string$sequence -> format items in right according to left
   symbol$sequence -> selection with tag name left over data right
-  $collection -> as JSON
-  string$collection -> format right according to left
+  $dict -> as JSON
+  string$dict -> format right according to left
 &
   &sequence -> where
   sequence&sequence -> smaller of items in left to corresponding items in right
@@ -168,20 +168,20 @@ $
   *channel -> take
 ,
   atom,sequence -> prepend left to right
-  (key;value),collection -> assoc value at key in right
+  (key;value),dict -> assoc value at key in right
   sequence,atom -> append right to left
   sequence,sequence -> concatenate right to left
-  collection,collection -> merge right into left
-  collection,(key;value) -> assoc value at key in left
+  dict,dict -> merge right into left
+  dict,(key;value) -> assoc value at key in left
 .
   function.function -> compose
   function.sequence -> apply
 <
   <sequence -> gradeUp
-  <collection -> keys
+  <dict -> keys
 >
   >sequence -> gradeDown
-  >collection -> values
+  >dict -> values
 ?
   ?sequence -> distinct items
   number?number -> pick left items from enumeration of right, without replacement if left is negative
