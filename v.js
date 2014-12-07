@@ -171,12 +171,14 @@ exports.run=function(src,r,ops){
 
 sTs=function(v){var s={type:'symbol',value:v,
   call:function(N,R,a){a.call(N,R,[s])}};return s}
-aTs=function(xs){return {
-  next:function(){return aTs(xs.slice(1))},
-  first:function(){return xs[0]},
-  length:function(){return xs.length},
-  cons:function(x){return aTs([x].concat(xs))},
-  conj:function(x){return aTs(xs.concat([x]))}}}
+aTs=(function(){
+  var s=function(xs){return {
+    next:function(){return aTs(xs.slice(1))},
+    first:function(){return xs[0]},
+    length:function(){return xs.length},
+    cons:function(x){return aTs([x].concat(xs))},
+    conj:function(x){return aTs(xs.concat([x]))}}}
+  s.empty=function(){return s([])};return s})()
 lTd=function(ps){
   var p=ps,get;while(p.length()>0){if(!symq(p.first().first()))return error('Dict with non-symbol keys');p=p.next()}
   get=function(r,a){
@@ -192,7 +194,7 @@ reduce=function(f,m){
     m=f.apply(N,[m].concat(args.map(function(a){return a.first()})));
     args=args.map(function(a){return a.next();})}
   return m}
-map=function(f){return reduce.apply(N,[function(m){return m.conj(f.apply(N,sl(arguments,1)))},aTs([])].concat(sl(arguments,1)))}
+map=function(f){return reduce.apply(N,[function(m){return m.conj(f.apply(N,sl(arguments,1)))},aTs.empty()].concat(sl(arguments,1)))}
 vdo=function(f,a,b){
   if(udfq(b))return numq(a)?f(a):seqq(a)?map(f,a):udf;
   return numq(a)&&numq(b)?f(a,b)
@@ -207,11 +209,11 @@ drop=function(n,xs){
   else inval('Cannot drop from end of sequence with undefined end')}
 take=function(n,xs){
   var ys,l=xs.length();
-  if(n>=0){ys=aTs([]);for(var i=0;i<n;i++)ys=ys.conj(xs.first()),xs=xs.next();return ys}
+  if(n>=0){ys=aTs.empty();for(var i=0;i<n;i++)ys=ys.conj(xs.first()),xs=xs.next();return ys}
   else if(l)return drop(l+n,xs);
   else inval('Cannot take from end of sequence with undefined end')}
 concat=function(xs,ys){while(ys.length()>0)xs=xs.conj(ys.first()),ys=ys.next();return xs}
-reverse=function(xs){var ys=aTs([]);while(xs.length()>0)ys=ys.cons(xs.first()),xs=xs.next();return ys}
+reverse=function(xs){var ys=aTs.empty();while(xs.length()>0)ys=ys.cons(xs.first()),xs=xs.next();return ys}
 
 arit=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(N,a))}}
 exports.defaultOps={
@@ -229,7 +231,7 @@ exports.defaultOps={
     function(a){return vop(a)?vdo(function(x){return 1/x},a):inval('%',a)},
     function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
   bang:arit(
-    function(a){return numq(a)?function(){var i=0,out=aTs([]);for(;i<a;i++)out=out.conj(i);return out}():ival('!',a)},
+    function(a){return numq(a)?function(){var i=0,out=aTs.empty();for(;i<a;i++)out=out.conj(i);return out}():ival('!',a)},
     function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
   at:function(R,a){
     switch(a.length){
@@ -255,9 +257,9 @@ exports.defaultOps={
             :symq(a)&&symq(b)               ? bl(a.value==b.value)
             :0}),
   comma:arit(
-    function(a){return numq(a)?aTs([a]):inval(',',a)},
+    function(a){return numq(a)?aTs.empty().conj(a):inval(',',a)},
     function(a,b){
-      return numq(a)&&numq(b)?aTs([a,b])
+      return numq(a)&&numq(b)?aTs.empty().conj(a).conj(b)
             :numq(a)&&seqq(b)?b.cons(a)
             :seqq(a)&&numq(b)?a.conj(b)
             :seqq(a)&&seqq(b)?concat(a,b)
