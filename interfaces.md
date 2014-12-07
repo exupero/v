@@ -17,11 +17,12 @@
 
 # sequence
 
+- empty
 - first
 - next
 - length
-- cons
-- conj
+- prepend
+- append
 
 # collection
 
