@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},bl=function(x){return x&1},numq,seqq,funq,symq,colq,ich,pt,to=function(t,x){return typeof x==t},sl=function(a,n){return Array.prototype.slice.call(a,n)},aTs,lTd,sTs,inval,invals,arit,vop,vdo,reduce,map,take,drop,concat,reverse,udf=void 0,N=null;
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=function(v){log(v);return v},error=function(m){throw m},bl=function(x){return x&1},numq,seqq,vecq,funq,symq,colq,ich,pt,to=function(t,x){return typeof x==t},sl=function(a,n){return Array.prototype.slice.call(a,n)},aTs,lTd,sTs,inval,invals,arit,vdo,reduce,map,take,drop,concat,reverse,udf=void 0,N=null;
 pt=function(f){var xs=sl(arguments,1);return function(){return f.apply(N,xs.concat(sl(arguments)))}}
 udfq=pt(to,'undefined');
 ich=function(){var ms=sl(arguments);return function(x){return ms.every(function(m){return to('function',x[m])})}}
@@ -6,6 +6,7 @@ numq=pt(to,'number')
 symq=function(x){return x.type=='symbol'}
 funq=ich('call')
 seqq=ich('next','first','length','prepend','append');
+vecq=function(x){return numq(x)||seqq(x)}
 colq=ich('get','assoc','dissoc');
 inval=function(s,a){error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=function(s,a,b){error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
@@ -189,7 +190,6 @@ lTd=function(ps){
   return {
     call:function(_,r,a){get(r,a[0])},
     get:get}},
-vop=function(a,b){return udfq(b)?numq(a)||seqq(a):vop(a)&&vop(b)}
 reduce=function(f,m){
   var args=sl(arguments,2);
   while(args.every(function(a){return a.length()>0})){
@@ -223,17 +223,17 @@ arit=function(){var arities=arguments;return function(R,a){R(arities[a.length-1]
 exports.defaultOps={
   tilde:arit(
     function(a){var f=function(x){return bl(!x)}
-      return vop(a)?vdo(f,a)
+      return vecq(a)?vdo(f,a)
             :inval('~',a)},
     function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(a.length()==b.length()&&reduce(function(m,x,y){return m&&x==y},1,a,b)):invals('~',a,b)}),
-  plus:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
+  plus:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
   dash:arit(
-    function(a){return vop(a)?vdo(function(x){return -x},a):inval('-',a)},
-    function(a,b){return vop(a,b)?vdo(function(x,y){return x-y},a,b):invals('-',a,b)}),
-  star:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
+    function(a){return vecq(a)?vdo(function(x){return -x},a):inval('-',a)},
+    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x-y},a,b):invals('-',a,b)}),
+  star:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
   percent:arit(
-    function(a){return vop(a)?vdo(function(x){return 1/x},a):inval('%',a)},
-    function(a,b){return vop(a,b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
+    function(a){return vecq(a)?vdo(function(x){return 1/x},a):inval('%',a)},
+    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
   bang:arit(
     function(a){return numq(a)?function(){var i=0,out=aTs.empty();for(;i<a;i++)out=out.append(i);return out}():ival('!',a)},
     function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
@@ -245,18 +245,18 @@ exports.defaultOps={
     function(a){return seqq(a)?a.length():inval('#',a)},
     function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
   under:arit(
-    function(a){return vop(a)?vdo(function(x){return Math.floor(x)},a):inval('_',a)},
+    function(a){return vecq(a)?vdo(function(x){return Math.floor(x)},a):inval('_',a)},
     function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
-  caret:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
-  amp:arit(N,function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
+  caret:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
+  langle:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
+  rangle:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
+  amp:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
   pipe:arit(
     function(a){return seqq(a)?reverse(a):inval('|',a)},
-    function(a,b){return vop(a,b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
+    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
   equals:arit(N,
     function(a,b){
-      return vop(a,b)?vdo(function(x,y){return bl(x==y)},a,b)
+      return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x==y)},a,b)
             :to('string',a)&&to('string',b) ? bl(a==b)
             :symq(a)&&symq(b)               ? bl(a.value==b.value)
             :0}),
