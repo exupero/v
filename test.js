@@ -1,4 +1,5 @@
-var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');console.error(v)},s=JSON.stringify,diff=function(ex,ac){err('expected',s(ex));err('actually',s(ac))},success=function(){process.stdout.write('.')};
+var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')};
+
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
@@ -45,9 +46,10 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
     {type:'eachPair',value:"':",part:'adverb'},
     {type:'each',value:"'",part:'adverb'},
     {type:'word',value:'ello',part:'noun'}]);
-  expect("abCN Ci Ni",[
-    {type:'word',value:'abCN',part:'noun'},
+  expect("abCDN Ci Di Ni",[
+    {type:'word',value:'abCDN',part:'noun'},
     {type:'channel',value:'C',part:'noun'},{type:'word',value:'i',part:'noun'},
+    {type:'dict',value:'D',part:'verb'},{type:'word',value:'i',part:'noun'},
     {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'}]);
   expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:'semi',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
   expect("abc / this",[{type:'word',value:'abc',part:'noun'}]);
@@ -169,11 +171,11 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
 })();
 
 (function(){
-  var ar=function(s){if(s.length&&s.first&&s.next){var a=[];while(s.length()>0){a.push(ar(s.first()));s=s.next()}return a}return s},
+  var ar=function(v){if(v.length&&v.first&&v.next){var a=[];while(v.length()>0){a.push(ar(v.first()));v=v.next()}return a}return v},
       expect=function(src,x){
     var c=0,
       go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
-    try{go()}catch(e){err(e)}
+    go();//try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -227,7 +229,9 @@ var v=require('./v'),l=console.log,err=function(v){process.stdout.write('\n');co
   expect('N',null);
   expect('(1;2;3)',[1,2,3]);
   expect('((1;2);(3;4))',[[1,2],[3,4]]);
-  expect('(D((`a;1);(`b;2)))`a',1);
-  expect('(D((`a;1);(`b;2)))`b',2);
+  expect('D((`a;1);(`b;2))`a',1);
+  expect('D((`a;1);(`b;2))`b',2);
+  expect('`a@D((`a;2);(`b;4))',2);
+  expect('`b@D((`a;2);(`b;4))',4);
 })();
 process.stdout.write('\n');
