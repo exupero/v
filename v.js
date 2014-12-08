@@ -163,12 +163,13 @@ exports.run=function(src,r,ops){
   evalSeq=function(es,r,env){var i=0,out=[],next=function(rs){out.push(rs);i<es.length?eval(es[i++],next,env):r(arrTseq(out))};eval(es[i++],next,env)}
   evals(parse(src),r,{})}
 
-var numq,seqq,vecq,funq,symq,ich,arrTseq,seqTdic,strTsym,count;
+var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTdic,strTsym,count,nth;
 ich=function(){var ms=sl(arguments);return function(x){return ms.every(function(m){return to('function',x[m])})}}
 numq=pt(to,'number')
 symq=function(x){return x.type=='symbol'}
 funq=ich('call')
 seqq=ich('next','first','prepend','append');
+mapq=ich('get','assoc','dissoc','remap');
 vecq=function(x){return numq(x)||seqq(x)}
 
 strTsym=function(v){var s={type:'symbol',value:v,
@@ -183,13 +184,21 @@ arrTseq=(function(){
   s.empty=function(){return s([])}
   return s})()
 seqTdic=function(ps){
-  var p=ps,get;while(p){if(!symq(p.first().first()))return error('Dict with non-symbol keys');p=p.next()}
-  get=function(r,a){
+  var p=ps,get,d;while(p){if(!symq(p.first().first()))return error('Dict with non-symbol keys');p=p.next()}
+  get=function(R,a){
     if(!symq(a))return error('Dict lookup with non-symbol '+json(a));var p=ps,k=a.value;
-    while(p){if(p.first().first().value==k)return r(p.first().next().first());p=p.next()}r(N)}
-  return {
-    call:function(_,r,a){get(r,a[0])},
-    get:get}},
+    while(p){if(p.first().first().value==k)return R(p.first().next().first());p=p.next()}R(N)}
+  d={
+    call:function(_,R,a){get(R,a[0])},
+    get:get,
+    assoc:function(R){},
+    dissoc:function(R){},
+    remap:function(R,f,a){
+      var out=arrTseq.empty(),p=ps,x;
+      if(udfq(a)){while(p)x=p.first(),out=out.append(arrTseq([x.first(),f(x.next().first())])),p=p.next();return R(seqTdic(out))}
+      R(N)}}
+  return d}
+
 reduce=function(f,m){
   var args=sl(arguments,2);
   while(args.every(function(a){return a})){
@@ -199,14 +208,25 @@ reduce=function(f,m){
 map=function(f){
   var rf=function(m){return m.append(f.apply(N,sl(arguments,1)))}
   return reduce.apply(N,[rf,arguments[1].empty()].concat(sl(arguments,1)))}
-vdo=function(f,a,b){
-  if(udfq(b))return numq(a)?f(a):seqq(a)?map(f,a):udf;
-  return numq(a)&&numq(b)?f(a,b)
-        :seqq(a)&&numq(b)?map(function(x){return f(x,b)},a)
-        :numq(a)&&seqq(b)?map(function(y){return f(a,y)},b)
-        :seqq(a)&&seqq(b)?map(f,a,b)
-        :udf}
+vdoq=function(a,b){
+  return (numq(a)||mapq(a)||seqq(a))&&udfq(b)||
+         (numq(a)||mapq(a)||seqq(a))&&numq(b)||
+         (numq(a)||mapq(a))&&mapq(b)||
+         (numq(a)||seqq(b))&&seqq(b)}
+vdo=function(r,f,a,b){
+  numq(a)&&udfq(b)?r(f(a))
+ :mapq(a)&&udfq(b)?a.remap(r,f)
+ :seqq(a)&&udfq(b)?r(map(f,a))
+ :numq(a)&&numq(b)?r(f(a,b))
+ :mapq(a)&&numq(b)?a.remap(r,function(x){return f(x,b)})
+ :numq(a)&&mapq(b)?b.remap(r,function(y){return f(a,y)})
+ :mapq(a)&&mapq(b)?a.remap(r,f,b)
+ :seqq(a)&&numq(b)?r(map(function(x){return f(x,b)},a))
+ :numq(a)&&seqq(b)?r(map(function(y){return f(a,y)},b))
+ :seqq(a)&&seqq(b)?r(map(f,a,b))
+ :r(udf)}
 count=function(xs){var c=0;while(xs)c+=1,xs=xs.next();return c}
+nth=function(xs,n){var c=0;while(xs&&c<n)xs=xs.next();return xs&&xs.first()}
 drop=function(n,xs){
   var l=count(xs);
   if(n>=0){for(var i=0;i<n;i++)xs=xs.next();return xs}
@@ -220,54 +240,51 @@ take=function(n,xs){
 concat=function(xs,ys){while(ys)xs=xs.append(ys.first()),ys=ys.next();return xs}
 reverse=function(xs){var ys=arrTseq.empty();while(xs)ys=ys.prepend(xs.first()),xs=xs.next();return ys}
 
-arit=function(){var arities=arguments;return function(R,a){R(arities[a.length-1].apply(N,a))}}
+arit=function(){var arities=arguments;return function(R,a){arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps={
   tilde:arit(
-    function(a){var f=function(x){return bl(!x)}
-      return vecq(a)?vdo(f,a)
-            :inval('~',a)},
-    function(a,b){return numq(a)&&numq(b)?a==b:seqq(a)&&seqq(b)?bl(count(a)==count(b)&&reduce(function(m,x,y){return m&&x==y},1,a,b)):invals('~',a,b)}),
-  plus:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x+y},a,b):invals('+',a,b)}),
+    function(R,a){vdoq(a)?vdo(R,function(x){return bl(!x)},a):inval('~',a)},
+    function(R,a,b){numq(a)&&numq(b)?R(a==b):seqq(a)&&seqq(b)?R(bl(count(a)==count(b)&&reduce(function(m,x,y){return m&x==y},1,a,b))):invals('~',a,b)}),
+  plus:arit(N,function(R,a,b){vdoq(a,b)?vdo(R,function(x,y){return x+y},a,b):invals('+',a,b)}),
   dash:arit(
-    function(a){return vecq(a)?vdo(function(x){return -x},a):inval('-',a)},
-    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x-y},a,b):invals('-',a,b)}),
-  star:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x*y},a,b):invals('*',a,b)}),
+    function(R,a){vecq(a)?vdo(R,function(x){return -x},a):inval('-',a)},
+    function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return x-y},a,b):invals('-',a,b)}),
+  star:arit(N,function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return x*y},a,b):invals('*',a,b)}),
   percent:arit(
-    function(a){return vecq(a)?vdo(function(x){return 1/x},a):inval('%',a)},
-    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x/y},a,b):invals('%',a,b)}),
+    function(R,a){vecq(a)?vdo(R,function(x){return 1/x},a):inval('%',a)},
+    function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return x/y},a,b):invals('%',a,b)}),
   bang:arit(
-    function(a){return numq(a)?function(){var i=0,out=arrTseq.empty();for(;i<a;i++)out=out.append(i);return out}():ival('!',a)},
-    function(a,b){return numq(a)&&numq(b)?a%b:invals('!',a,b)}),
-  at:function(R,a){
-    switch(a.length){
-      case 1:a=a[0];R(bl(numq(a)||symq(a)));break;
-      case 2:var b=a[1],a=a[0];funq(a)?a.call(N,R,b):invals('@',a,b);break;}},
+    function(R,a){numq(a)?function(){var i=0,out=arrTseq.empty();for(;i<a;i++)out=out.append(i);R(out)}():inval('!',a)},
+    function(R,a,b){numq(a)&&numq(b)?R(a%b):invals('!',a,b)}),
+  at:arit(
+    function(R,a){R(bl(numq(a)||symq(a)))},
+    function(R,a,b){funq(a)?a.call(N,R,b):invals('@',a,b)}),
   hash:arit(
-    function(a){return seqq(a)?count(a):inval('#',a)},
-    function(a,b){return numq(a)&&seqq(b)?take(a,b):invals('#',a,b)}),
+    function(R,a){seqq(a)?R(count(a)):inval('#',a)},
+    function(R,a,b){numq(a)&&seqq(b)?R(take(a,b)):invals('#',a,b)}),
   under:arit(
-    function(a){return vecq(a)?vdo(function(x){return Math.floor(x)},a):inval('_',a)},
-    function(a,b){return numq(a)&&seqq(b)?drop(a,b):invals('_',a,b)}),
-  caret:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
-  amp:arit(N,function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
+    function(R,a){vecq(a)?vdo(R,function(x){return Math.floor(x)},a):inval('_',a)},
+    function(R,a,b){numq(a)&&seqq(b)?R(drop(a,b)):invals('_',a,b)}),
+  caret:arit(N,function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return Math.pow(x,y)},a,b):invals('^',a,b)}),
+  langle:arit(N,function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return bl(x<y)},a,b):invals('<',a,b)}),
+  rangle:arit(N,function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return bl(x>y)},a,b):invals('>',a,b)}),
+  amp:arit(N,function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return x>y?y:x},a,b):invals('&',a,b)}),
   pipe:arit(
-    function(a){return seqq(a)?reverse(a):inval('|',a)},
-    function(a,b){return vecq(a)&&vecq(b)?vdo(function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
+    function(R,a){seqq(a)?R(reverse(a)):inval('|',a)},
+    function(R,a,b){vecq(a)&&vecq(b)?vdo(R,function(x,y){return x>y?x:y},a,b):invals('|',a,b)}),
   equals:arit(N,
-    function(a,b){
-      return vecq(a)&&vecq(b)?vdo(function(x,y){return bl(x==y)},a,b)
-            :to('string',a)&&to('string',b) ? bl(a==b)
-            :symq(a)&&symq(b)               ? bl(a.value==b.value)
-            :0}),
+    function(R,a,b){
+      vecq(a)&&vecq(b)               ? vdo(R,function(x,y){return bl(x==y)},a,b)
+     :to('string',a)&&to('string',b) ? R(bl(a==b))
+     :symq(a)&&symq(b)               ? R(bl(a.value==b.value))
+     :R(0)}),
   comma:arit(
-    function(a){return numq(a)?arrTseq.empty().append(a):inval(',',a)},
-    function(a,b){
-      return numq(a)&&numq(b)?arrTseq.empty().append(a).append(b)
-            :numq(a)&&seqq(b)?b.prepend(a)
-            :seqq(a)&&numq(b)?a.append(b)
-            :seqq(a)&&seqq(b)?concat(a,b)
-            :invals(',',a,b)}),
-  dict:arit(function(a){return seqTdic(a)}),
+    function(R,a){numq(a)?R(arrTseq.empty().append(a)):inval(',',a)},
+    function(R,a,b){
+      numq(a)&&numq(b)?R(arrTseq.empty().append(a).append(b))
+     :numq(a)&&seqq(b)?R(b.prepend(a))
+     :seqq(a)&&numq(b)?R(a.append(b))
+     :seqq(a)&&seqq(b)?R(concat(a,b))
+     :invals(',',a,b)}),
+  dict:arit(function(R,a){R(seqTdic(a))}),
 }

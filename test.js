@@ -171,11 +171,11 @@ var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(
 })();
 
 (function(){
-  var ar=function(v){if(v.first&&v.next){var a=[];while(v){a.push(ar(v.first()));v=v.next()}return a}return v},
+  var ar=function(v){if(v&&v.first&&v.next){var a=[];while(v){a.push(ar(v.first()));v=v.next()}return a}return v},
       expect=function(src,x){
     var c=0,
-      go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
-    go();//try{go()}catch(e){err(e)}
+      go=function(){v.run(src,function(r){c=1;r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
+    try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -233,5 +233,10 @@ var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(
   expect('D((`a;1);(`b;2))`b',2);
   expect('`a@D((`a;2);(`b;4))',2);
   expect('`b@D((`a;2);(`b;4))',4);
+  expect('`a@~D((`a;0);(`b;4))',1);
+  expect('`b@~D((`a;0);(`b;4))',0);
+  expect('`a@1+D((`a;5);(`b;4))',6);
+  expect('`a@(D((`a;5);(`b;4)))+2',7);
+  expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))`',7);
 })();
 process.stdout.write('\n');

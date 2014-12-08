@@ -17,7 +17,6 @@
 
 # sequence
 
-- empty
 - first
 - next
 - prepend
@@ -25,13 +24,14 @@
 
 # collection
 
+- empty
+
+# mapping
+
 - get
 - assoc
 - dissoc
-
-# dict
-
-sequence + collection
+- remap
 
 # channel
 
