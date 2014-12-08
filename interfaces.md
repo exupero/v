@@ -20,7 +20,6 @@
 - empty
 - first
 - next
-- length
 - prepend
 - append
 

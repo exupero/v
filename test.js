@@ -171,7 +171,7 @@ var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(
 })();
 
 (function(){
-  var ar=function(v){if(v.length&&v.first&&v.next){var a=[];while(v.length()>0){a.push(ar(v.first()));v=v.next()}return a}return v},
+  var ar=function(v){if(v.first&&v.next){var a=[];while(v){a.push(ar(v.first()));v=v.next()}return a}return v},
       expect=function(src,x){
     var c=0,
       go=function(){v.run(src,function(r){c=1;if(Object.prototype.toString.call(x)=='[object Array]')r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
