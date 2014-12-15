@@ -1,4 +1,5 @@
-var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')};
+Error.stackTraceLimit = 30
+var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
 
 (function(){
   var expect=function(src,tokens){
@@ -171,11 +172,12 @@ var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(
 })();
 
 (function(){
-  var ar=function(v){if(v&&v.first&&v.next){var a=[];while(v){a.push(ar(v.first()));v=v.next()}return a}return v},
+  var ar=function(R,v){
+    if(v&&v.first&&v.next){var a=[],next=function(xs){if(!xs){R(a);return}xs.first(function(x){ar(function(xr){a.push(xr);xs.next(next)},x)})};next(v)}
+    else R(v)},
       expect=function(src,x){
-    var c=0,
-      go=function(){v.run(src,function(r){c=1;r=ar(r);if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},v.defaultOps)}
-    try{go()}catch(e){err(e)}
+    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},r)},v.defaultOps)}
+    go();//try{go()}catch(e){err(e)}
     if(!c)err('`'+src+'` does not return a result')}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -236,6 +238,7 @@ var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(
   expect('`a@~D((`a;0);(`b;4))',1);
   expect('`b@~D((`a;0);(`b;4))',0);
   expect('`a@1+D((`a;5);(`b;4))',6);
+  expect('`c@1+D((`a;5);(`b;4))',null);
   expect('`a@(D((`a;5);(`b;4)))+2',7);
   expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))`',7);
 })();
