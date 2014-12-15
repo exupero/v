@@ -1,5 +1,5 @@
 Error.stackTraceLimit = 30
-var v=require('./v'),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
+var v=require('./build/v'),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
 
 (function(){
   var expect=function(src,tokens){
