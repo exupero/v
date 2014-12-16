@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=@{[v]log(v);^^v},error=@{[m]throw m},bl=@{[x]^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{[x]^^x};
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=@{log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
 pt=@{[f]var xs=sl(A,1);^^@{^^f.apply(N,xs.concat(sl(A)))}}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -6,22 +6,16 @@ invals=@{[s,a,b]error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)
 
 tokens=@{[input,st]
   var t={},s=0,p=0,w=0,ts=[];
-  t.nextChar=@{
-    if(p>=input.length){w=0;^^eof}
-    var c=input[p];w=1;p+=w;^^c}
+  t.nextChar=@{if(p>=input.length){w=0;^^eof}var c=input[p];w=1;p+=w;^^c}
   t.backup=@{p-=w}
   t.peek=@{var c=this.nextChar();this.backup();^^c}
-  t.accept=@{[valid]
-    if(valid.indexOf(this.nextChar())>=0)^^1;
-    this.backup();^^0}
-  t.acceptRun=@{[valid]
-    while(valid.indexOf(this.nextChar())>=0){}
-    this.backup()}
+  t.accept=@{[valid]if(valid.indexOf(this.nextChar())>=0)^^1;this.backup();^^0}
+  t.acceptRun=@{[valid]while(valid.indexOf(this.nextChar())>=0){}this.backup()}
   t.until=@{[stop]
     while(1){
       var c=this.nextChar();
-      if(c==eof)return;
-      if(stop.indexOf(c)>=0){this.backup();return}}}
+      if(c==eof)^^;
+      if(stop.indexOf(c)>=0){this.backup();^^}}}
   t.done=@{^^this.peek()==eof}
   t.ignore=@{s=p}
   t.emit=@{[type,part,f]ts.push({type:type,value:(f||@{[x]^^x})(input.slice(s,p)),part:part});s=p}
@@ -33,7 +27,7 @@ exports.lex=lex=@{[input]
   init=@{[t]
     var e=t.emit;
     while(1){
-      if(t.done())return;
+      if(t.done())^^;
       switch(t.nextChar()){
         case ' ':^^space;
         case '`':t.ignore();^^symbol;
@@ -92,7 +86,7 @@ exports.lex=lex=@{[input]
     else{t.ignore();^^init}}
   ^^tokens(input,init)}
 
-isNum=@{[x]^^x.type=='int'||x.type=='float'}
+isNum=@{^^x.type=='int'||x.type=='float'}
 expr=@{[ts]
   if(ts.length==1)^^ts[0];
   var st,bind,i=ts.length-1;
@@ -131,7 +125,7 @@ exprs=@{[ts]
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
 wraps=@{[ts]
-  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));return}unmatched(t.type)};
+  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));^^}unmatched(t.type)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
     if(t.type=='laren')find('raren',@{[es]^^es.length==1?es[0]:{type:'list',part:'noun',values:es}});
@@ -166,13 +160,13 @@ exports.run=@{[src,r,ops]
 var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number')
-symq=@{[x]^^x.type=='symbol'}
+symq=@{^^x.type=='symbol'}
 funq=ich('call')
 seqq=ich('next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap');
-vecq=@{[x]^^numq(x)||seqq(x)}
+vecq=@{^^numq(x)||seqq(x)}
 
-strTsym=@{[v]var s={type:'symbol',value:v,
+strTsym=@{var s={type:'symbol',value:x,
   call:@{[N,R,a]a.call(N,R,[s])}};^^s}
 arrTseq=(@{
   var s=@{[xs]^^{
@@ -184,14 +178,14 @@ arrTseq=(@{
   s.empty=@{^^s([])}
   ^^s})()
 seqTdic=@{[R,ps]
-  get=@{[r,k]var C=@{[xs]if(!xs){r(N);return};var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value){r(nth(x,1));return};xs.next(C)};ps.next(C)}
+  get=@{[r,k]var C=@{[xs]if(!xs){r(N);^^};var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value){r(nth(x,1));^^};xs.next(C)};ps.next(C)}
   R({call:@{[_,r,a]get(r,a[0])},
      get:get,
      assoc:@{[r]},
      dissoc:@{[r]},
      remap:@{[r,f,a]
        var out=arrTseq.empty(),append=@{[k,v]out=out.append(arrTseq([k,f(v)]))};
-       if(udfq(a)){iter(@{[p]append(nth(p,0),nth(p,1));^^1},ps);seqTdic(r,out);return}
+       if(udfq(a)){iter(@{[p]append(nth(p,0),nth(p,1));^^1},ps);seqTdic(r,out);^^}
        seqTdic(r,arrTseq([]))}})}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{[x]out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
@@ -210,32 +204,32 @@ vdo=@{[R,f,a,b]
  :mapq(a)&&udfq(b)?a.remap(R,f)
  :seqq(a)&&udfq(b)?map(R,f,a)
  :numq(a)&&numq(b)?R(f(a,b))
- :mapq(a)&&numq(b)?a.remap(R,@{[x]^^f(x,b)})
- :numq(a)&&mapq(b)?b.remap(R,@{[y]^^f(a,y)})
+ :mapq(a)&&numq(b)?a.remap(R,@{^^f(x,b)})
+ :numq(a)&&mapq(b)?b.remap(R,@{^^f(a,x)})
  :mapq(a)&&mapq(b)?a.remap(R,f,b)
- :seqq(a)&&numq(b)?R(map(@{[x]^^f(x,b)},a))
- :numq(a)&&seqq(b)?map(R,@{[y]^^f(a,y)},b)
+ :seqq(a)&&numq(b)?R(map(@{^^f(x,b)},a))
+ :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
  :seqq(a)&&seqq(b)?map(R,f,a,b)
  :R(udf)}
-count=@{[R,xs]var c=0,C=@{[xss]if(!xss){R(c);return}c++;xss.next(C)};C(xs)}
-concat=@{[R,xs,ys]var C=@{[zs]if(!zs){R(xs);return}zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})};C(ys)}
-reverse=@{[R,xs]var out=arrTseq.empty(),C=@{[ys]if(!ys){R(out);return}ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})};C(xs)}
-take=@{[R,n,xs]var ys=[],C=@{[zs]if(!zs||ys.length==n){R(arrTseq(ys));return}zs.first(@{[z]ys.push(z);zs.next(C)},zs)};C(xs)}
-drop=@{[R,n,xs]var i=0,C=@{[ys]if(!ys){R(N);return}if(i==n){R(ys);return}i++;ys.next(C)};C(xs)}
+count=@{[R,xs]var c=0,C=@{[xss]if(!xss){R(c);^^}c++;xss.next(C)};C(xs)}
+concat=@{[R,xs,ys]var C=@{[zs]if(!zs){R(xs);^^}zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})};C(ys)}
+reverse=@{[R,xs]var out=arrTseq.empty(),C=@{[ys]if(!ys){R(out);^^}ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})};C(xs)}
+take=@{[R,n,xs]var ys=[],C=@{[zs]if(!zs||ys.length==n){R(arrTseq(ys));^^}zs.first(@{[z]ys.push(z);zs.next(C)},zs)};C(xs)}
+drop=@{[R,n,xs]var i=0,C=@{[ys]if(!ys){R(N);^^}if(i==n){R(ys);^^}i++;ys.next(C)};C(xs)}
 
 arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
-    @{[R,a]vdoq(a)?vdo(R,@{[x]^^bl(!x)},a):inval('~',a)},
-    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]if(cs[0]!=cs[1]){R(0);return}reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
-  plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{[x,y]^^x+y},a,b):invals('+',a,b)}),
+    @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
+    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]if(cs[0]!=cs[1]){R(0);^^}reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
+  plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
   dash:arit(
-    @{[R,a]vecq(a)?vdo(R,@{[x]^^-x},a):inval('-',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^x-y},a,b):invals('-',a,b)}),
-  star:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^x*y},a,b):invals('*',a,b)}),
+    @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
+  star:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   percent:arit(
-    @{[R,a]vecq(a)?vdo(R,@{[x]^^1/x},a):inval('%',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^x/y},a,b):invals('%',a,b)}),
+    @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
   bang:arit(
     @{[R,a]numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}():inval('!',a)},
     @{[R,a,b]numq(a)&&numq(b)?R(a%b):invals('!',a,b)}),
@@ -246,18 +240,18 @@ exports.defaultOps=({
     @{[R,a]seqq(a)?count(R,a):inval('#',a)},
     @{[R,a,b]numq(a)&&seqq(b)?take(R,a,b):invals('#',a,b)}),
   under:arit(
-    @{[R,a]vecq(a)?vdo(R,@{[x]^^Math.floor(x)},a):inval('_',a)},
+    @{[R,a]vecq(a)?vdo(R,@{^^Math.floor(x)},a):inval('_',a)},
     @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
-  caret:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^bl(x>y)},a,b):invals('>',a,b)}),
-  amp:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^x>y?y:x},a,b):invals('&',a,b)}),
+  caret:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^Math.pow(x,y)},a,b):invals('^',a,b)}),
+  langle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x<y)},a,b):invals('<',a,b)}),
+  rangle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x>y)},a,b):invals('>',a,b)}),
+  amp:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?y:x},a,b):invals('&',a,b)}),
   pipe:arit(
     @{[R,a]seqq(a)?reverse(R,a):inval('|',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{[x,y]^^x>y?x:y},a,b):invals('|',a,b)}),
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?x:y},a,b):invals('|',a,b)}),
   equals:arit(N,
     @{[R,a,b]
-      vecq(a)&&vecq(b)               ? vdo(R,@{[x,y]^^bl(x==y)},a,b)
+      vecq(a)&&vecq(b)               ? vdo(R,@{^^bl(x==y)},a,b)
      :to('string',a)&&to('string',b) ? R(bl(a==b))
      :symq(a)&&symq(b)               ? R(bl(a.value==b.value))
      :R(0)}),
