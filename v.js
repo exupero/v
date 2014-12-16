@@ -15,7 +15,7 @@ tokens=@{[input,st]
     while(1){
       var c=this.nextChar();
       if(c==eof)^^;
-      if(stop.indexOf(c)>=0){this.backup();^^}}}
+      if(stop.indexOf(c)>=0){^^this.backup()}}}
   t.done=@{^^this.peek()==eof}
   t.ignore=@{s=p}
   t.emit=@{[type,part,f]ts.push({type:type,value:(f||@{[x]^^x})(input.slice(s,p)),part:part});s=p}
@@ -178,7 +178,7 @@ arrTseq=(@{
   s.empty=@{^^s([])}
   ^^s})()
 seqTdic=@{[R,ps]
-  get=@{[r,k]var C=@{[xs]if(!xs){r(N);^^};var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value){r(nth(x,1));^^};xs.next(C)};ps.next(C)}
+  get=@{[r,k]var C=@{[xs]if(!xs)^^r(N);var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value)^^r(nth(x,1));xs.next(C)};ps.next(C)}
   R({call:@{[_,r,a]get(r,a[0])},
      get:get,
      assoc:@{[r]},
@@ -211,17 +211,17 @@ vdo=@{[R,f,a,b]
  :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
  :seqq(a)&&seqq(b)?map(R,f,a,b)
  :R(udf)}
-count=@{[R,xs]var c=0,C=@{[xss]if(!xss){R(c);^^}c++;xss.next(C)};C(xs)}
-concat=@{[R,xs,ys]var C=@{[zs]if(!zs){R(xs);^^}zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})};C(ys)}
-reverse=@{[R,xs]var out=arrTseq.empty(),C=@{[ys]if(!ys){R(out);^^}ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})};C(xs)}
-take=@{[R,n,xs]var ys=[],C=@{[zs]if(!zs||ys.length==n){R(arrTseq(ys));^^}zs.first(@{[z]ys.push(z);zs.next(C)},zs)};C(xs)}
-drop=@{[R,n,xs]var i=0,C=@{[ys]if(!ys){R(N);^^}if(i==n){R(ys);^^}i++;ys.next(C)};C(xs)}
+count=@{[R,xs]var c=0,C=@{[xss]if(!xss)^^R(c);c++;xss.next(C)};C(xs)}
+concat=@{[R,xs,ys]var C=@{[zs]if(!zs)^^R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})};C(ys)}
+reverse=@{[R,xs]var out=arrTseq.empty(),C=@{[ys]if(!ys)^^R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})};C(xs)}
+take=@{[R,n,xs]var ys=[],C=@{[zs]if(!zs||ys.length==n)^^R(arrTseq(ys));zs.first(@{[z]ys.push(z);zs.next(C)},zs)};C(xs)}
+drop=@{[R,n,xs]var i=0,C=@{[ys]if(!ys)^^R(N);if(i==n)^^R(ys);i++;ys.next(C)};C(xs)}
 
 arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
-    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]if(cs[0]!=cs[1]){R(0);^^}reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
+    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]if(cs[0]!=cs[1])^^R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
   plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
   dash:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
