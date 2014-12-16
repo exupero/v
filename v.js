@@ -157,7 +157,7 @@ exports.run=@{[src,r,ops]
   evalSeq=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
-var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse;
+var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
@@ -168,7 +168,7 @@ vecq=@{^^numq(x)||seqq(x)}
 
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[N,R,a]a.call(N,R,[s])}};^^s}
-arrTseq=(@{
+arrTseq=@{
   var s=@{[xs]^^{
     empty:s.empty,
     first:@{[R]R(xs[0])},
@@ -176,7 +176,8 @@ arrTseq=(@{
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
   s.empty=@{^^s([])}
-  ^^s})()
+  ^^s}()
+seqTarr=@{[R,xs]var out=[];@(xs){[ys]if(!ys)^^R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps]
   get=@{[r,k]var C=@{[xs]if(!xs)^^r(N);var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value)^^r(nth(x,1));xs.next(C)};ps.next(C)}
   R({call:@{[_,r,a]get(r,a[0])},
@@ -214,8 +215,16 @@ vdo=@{[R,f,a,b]
 count=@{[R,xs]var c=0;@(xs){[xss]if(!xss)^^R(c);c++;xss.next(C)}}
 concat=@{[R,xs,ys]@(ys){[zs]if(!zs)^^R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
 reverse=@{[R,xs]var out=arrTseq.empty();@(xs){[ys]if(!ys)^^R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
-take=@{[R,n,xs]var ys=[];@(xs){[zs]if(!zs||ys.length==n)^^R(arrTseq(ys));zs.first(@{[z]ys.push(z);zs.next(C)},zs)}}
-drop=@{[R,n,xs]var i=0;@(xs){[ys]if(!ys)^^R(N);if(i==n)^^R(ys);i++;ys.next(C)}}
+take=@{[R,n,xs]
+   n==0?R(xs)
+  :n>0?@{var ys=[];@(xs){[zs]if(!zs||ys.length==n)^^R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}()
+  :n<0?seqTarr(@{R(arrTseq(x.slice(x.length+n)))},xs)
+  :udf}
+drop=@{[R,n,xs]
+   n==0?R(xs)
+  :n>0?@{var i=0;@(xs){[ys]if(!ys)^^R(N);if(i==n)^^R(ys);i++;ys.next(C)}}()
+  :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
+  :udf}
 
 arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
