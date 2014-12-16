@@ -1,6 +1,7 @@
 Error.stackTraceLimit = 30
-var v=require(process.argv[2]),util=require('util'),spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
+var v=require(process.argv[2]),util=require('util'),failures=0,spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
 
+process.stdout.write('\n');
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
@@ -176,9 +177,9 @@ var v=require(process.argv[2]),util=require('util'),spect=function(v){return uti
     if(v&&v.first&&v.next){var a=[],next=function(xs){if(!xs){R(a);return}xs.first(function(x){ar(function(xr){a.push(xr);xs.next(next)},x)})};next(v)}
     else R(v)},
       expect=function(src,x){
-    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));return}success()},r)},v.defaultOps)}
+    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}success()},r)},v.defaultOps)}
     go();//try{go()}catch(e){err(e)}
-    if(!c)err('`'+src+'` does not return a result')}
+    if(!c){err('`'+src+'` does not return a result');failures=1}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
@@ -243,3 +244,4 @@ var v=require(process.argv[2]),util=require('util'),spect=function(v){return uti
   expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))`',7);
 })();
 process.stdout.write('\n');
+process.exit(failures);
