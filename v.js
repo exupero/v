@@ -131,7 +131,7 @@ wraps=@{[ts]
     if(t.type=='laren')find('raren',@{[es]^^es.length==1?es[0]:{type:'list',part:'noun',values:es}});
     else if(t.type=='lacket')find('racket',@{[es]^^{type:'argList',part:'noun',args:es}});
     else if(t.type=='lace')find('race',@{[es,tss]
-      var args=tss.filter(@{[t]^^t.type=='word'&&(t.value=='x'||t.value=='y'||t.value=='z')}).map(@{[t]^^t.value});
+      var args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
       ^^{type:'func',part:'noun',args:args,body:es}})}
   ^^ts}
 exports.parse=parse=@{[src]^^exprs(wraps(lex(src)))}
@@ -157,7 +157,7 @@ exports.run=@{[src,r,ops]
   evalSeq=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
-var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse;
+var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
@@ -178,16 +178,13 @@ arrTseq=@{
   s.empty=@{^^s([])}
   ^^s}()
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]if(!ys)^^R(out);ys.first(@{out.push(x);ys.next(C)})}}
-seqTdic=@{[R,ps]
-  get=@{[r,k]var C=@{[xs]if(!xs)^^r(N);var x=xs.first(),x0=nth(x,0);if(x0.type==k.type&&x0.value==k.value)^^r(nth(x,1));xs.next(C)};ps.next(C)}
+seqTdic=@{[R,ps,f]
+  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?r(f?f(b):b):xs.next(C)},x)})}};
   R({call:@{[_,r,a]get(r,a[0])},
      get:get,
      assoc:@{[r]},
      dissoc:@{[r]},
-     remap:@{[r,f,a]
-       var out=arrTseq.empty(),append=@{[k,v]out=out.append(arrTseq([k,f(v)]))};
-       if(udfq(a)){iter(@{[p]append(nth(p,0),nth(p,1));^^1},ps);seqTdic(r,out);^^}
-       seqTdic(r,arrTseq([]))}})}
+     remap:@{[r,g,a]seqTdic(r,ps,f?@{^^g(f(x))}:g)}})}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
@@ -225,6 +222,7 @@ drop=@{[R,n,xs]
   :n>0?@{var i=0;@(xs){[ys]if(!ys)^^R(N);if(i==n)^^R(ys);i++;ys.next(C)}}()
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
+pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 
 arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({

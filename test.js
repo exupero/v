@@ -238,6 +238,7 @@ process.stdout.write('\n');
   expect('`b@D((`a;2);(`b;4))',4);
   expect('`a@~D((`a;0);(`b;4))',1);
   expect('`b@~D((`a;0);(`b;4))',0);
+  expect('`b@~~D((`a;0);(`b;4))',1);
   expect('`a@1+D((`a;5);(`b;4))',6);
   expect('`c@1+D((`a;5);(`b;4))',null);
   expect('`a@(D((`a;5);(`b;4)))+2',7);
