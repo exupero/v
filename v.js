@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=@{log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
+var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
 pt=@{[f]var xs=sl(A,1);^^@{^^f.apply(N,xs.concat(sl(A)))}}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -118,8 +118,8 @@ expr=@{[ts]
     i--}
   ^^ts[0]}
 exprs=@{[ts]
-  var e=ts.length;
-  for(var i=e-1;i>=0;i--){
+  var i,e=ts.length;
+  for(i=e-1;i>=0;i--){
     if(i==0)ts.splice(i,e-i,ts.slice(i,e));
     if(ts[i].type=='semi'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}}
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
@@ -128,8 +128,8 @@ wraps=@{[ts]
   var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));^^}unmatched(t.type)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
-    if(t.type=='laren')find('raren',@{[es]^^es.length==1?es[0]:{type:'list',part:'noun',values:es}});
-    else if(t.type=='lacket')find('racket',@{[es]^^{type:'argList',part:'noun',args:es}});
+    if(t.type=='laren')find('raren',@{^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[1])?[x[0]]:x}});
+    else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:x}});
     else if(t.type=='lace')find('race',@{[es,tss]
       var args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
       ^^{type:'func',part:'noun',args:args,body:es}})}
@@ -139,19 +139,19 @@ exports.parse=parse=@{[src]^^exprs(wraps(lex(src)))}
 exports.run=@{[src,r,ops]
   eval=@{[tr,r,env]
     ^^udfq(tr.type)                           ? r(tr)
-          :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]if(!funq(f))^^error('Not callable: '+f);f.call(N,r,[x])},env)
-          :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,[x,y[0]])})},env)
-          :tr.type=='func'                         ? r(@{[R,a]var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
-          :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
-          :tr.type=='list'                         ? evalSeq(tr.values,r,env)
-          :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})
-          :symq(tr)                                ? r(strTsym(tr.value))
-          :tr.type=='int'                          ? r(parseInt(tr.value))
-          :tr.type=='float'                        ? r(parseFloat(tr.value))
-          :tr.type=='string'                       ? r(tr.value)
-          :tr.type=='nil'                          ? r(N)
-          :ops[tr.type]                            ? r(ops[tr.type])
-          :error('Invalid AST: '+json(tr))}
+     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]if(!funq(f))^^error('Not callable: '+f);f.call(N,r,[x])},env)
+     :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,[x,y[0]])})},env)
+     :tr.type=='func'                         ? r(@{[R,a]var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
+     :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
+     :tr.type=='list'                         ? evalSeq(tr.values,r,env)
+     :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})
+     :symq(tr)                                ? r(strTsym(tr.value))
+     :tr.type=='int'                          ? r(parseInt(tr.value))
+     :tr.type=='float'                        ? r(parseFloat(tr.value))
+     :tr.type=='string'                       ? r(tr.value)
+     :tr.type=='nil'                          ? r(N)
+     :ops[tr.type]                            ? r(ops[tr.type])
+     :error('Invalid AST: '+json(tr))}
   evals=@{[es,r,env]var i=0;@(){i<es.length?eval(es[i++],C,env):r(x)}}
   evall=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r.apply(N,out)};eval(es[i++],C,env)}
   evalSeq=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}

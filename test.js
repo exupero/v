@@ -63,7 +63,7 @@ process.stdout.write('\n');
     if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);return};
     for(var i=0;i<ast.length;i++){
       var a=ast[i],e=expected[i];
-      if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);return}}
+      if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);failures=1;return}}
     success()}
   var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
   expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
@@ -170,6 +170,11 @@ process.stdout.write('\n');
           values:[{type:'int',value:'1',part:'noun'},
                   {type:'int',value:'2',part:'noun'},
                   {type:'int',value:'3',part:'noun'}]}}]);
+  expect('((`a;5);)',[
+    {type:'list',part:'noun',
+      values:[{type:'list',part:'noun',
+               values:[{type:'symbol',value:'a',part:'noun'},
+                       {type:'int',value:'5',part:'noun'}]}]}]);
 })();
 
 (function(){
@@ -178,7 +183,7 @@ process.stdout.write('\n');
     else R(v)},
       expect=function(src,x){
     var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}success()},r)},v.defaultOps)}
-    go();//try{go()}catch(e){err(e)}
+    try{go()}catch(e){err(e)}
     if(!c){err('`'+src+'` does not return a result');failures=1}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
@@ -243,6 +248,7 @@ process.stdout.write('\n');
   expect('`c@1+D((`a;5);(`b;4))',null);
   expect('`a@(D((`a;5);(`b;4)))+2',7);
   expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))',7);
+  expect('`a@D((`a;5);)',5);
 })();
 process.stdout.write('\n');
 process.exit(failures);
