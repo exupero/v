@@ -128,7 +128,7 @@ wraps=@{[ts]
   var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));^^}unmatched(t.type)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
-    if(t.type=='laren')find('raren',@{^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[1])?[x[0]]:x}});
+    if(t.type=='laren')find('raren',@{^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
     else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:x}});
     else if(t.type=='lace')find('race',@{[es,tss]
       var args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
@@ -154,7 +154,7 @@ exports.run=@{[src,r,ops]
      :error('Invalid AST: '+json(tr))}
   evals=@{[es,r,env]var i=0;@(){i<es.length?eval(es[i++],C,env):r(x)}}
   evall=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r.apply(N,out)};eval(es[i++],C,env)}
-  evalSeq=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
+  evalSeq=@{[es,r,env]if(es.length==0)^^r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
 var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair;
@@ -179,7 +179,7 @@ arrTseq=@{
   ^^s}()
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]if(!ys)^^R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
-  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
+  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{if(!x)^^r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
       d={call:@{[_,r,a]get(r,a[0])},
          get:get,
          assoc:@{[r]},

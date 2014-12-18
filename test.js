@@ -175,6 +175,9 @@ process.stdout.write('\n');
       values:[{type:'list',part:'noun',
                values:[{type:'symbol',value:'a',part:'noun'},
                        {type:'int',value:'5',part:'noun'}]}]}]);
+  expect('()',[
+    {type:'list',part:'noun',
+      values:[]}]);
 })();
 
 (function(){
@@ -249,6 +252,7 @@ process.stdout.write('\n');
   expect('`a@(D((`a;5);(`b;4)))+2',7);
   expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))',7);
   expect('`a@D((`a;5);)',5);
+  expect('`a@D()',null);
 })();
 process.stdout.write('\n');
 process.exit(failures);
