@@ -179,12 +179,17 @@ arrTseq=@{
   ^^s}()
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]if(!ys)^^R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
-  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b):r(b)):xs.next(C)},x)})}};
-  R({call:@{[_,r,a]get(r,a[0])},
-     get:get,
-     assoc:@{[r]},
-     dissoc:@{[r]},
-     remap:@{[r,g,a]seqTdic(r,ps,f?@{[r,x]f(@{g(r,x)},x)}:g)}})}
+  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
+      d={call:@{[_,r,a]get(r,a[0])},
+         get:get,
+         assoc:@{[r]},
+         dissoc:@{[r]},
+         remap:@{[r,g,a]
+           udfq(a)&&f ? seqTdic(r,ps,@{[r,x]f(@{g(r,x)},x)})
+          :udfq(a)    ? seqTdic(r,ps,g)
+          :f          ? seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]f(@{g(r,x,v2)},v1,v2)},k)})
+          :seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]g(r,v1,v2)},k)})}};
+  R(d)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
@@ -204,7 +209,7 @@ vdo=@{[R,f,a,b]
  :numq(a)&&numq(b)?R(f(a,b))
  :mapq(a)&&numq(b)?a.remap(R,@{[r,x]r(f(x,b))})
  :numq(a)&&mapq(b)?b.remap(R,@{[r,x]r(f(a,x))})
- :mapq(a)&&mapq(b)?a.remap(R,@{[r,x]r(f(x))},b)
+ :mapq(a)&&mapq(b)?a.remap(R,@{[r,x,y]r(f(x,y))},b)
  :seqq(a)&&numq(b)?R(map(@{^^f(x,b)},a))
  :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
  :seqq(a)&&seqq(b)?map(R,f,a,b)

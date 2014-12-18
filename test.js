@@ -242,7 +242,7 @@ process.stdout.write('\n');
   expect('`a@1+D((`a;5);(`b;4))',6);
   expect('`c@1+D((`a;5);(`b;4))',null);
   expect('`a@(D((`a;5);(`b;4)))+2',7);
-  expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))`',7);
+  expect('`a@(D((`a;5);(`b;4)))+D((`a;2);(`b;6))',7);
 })();
 process.stdout.write('\n');
 process.exit(failures);
