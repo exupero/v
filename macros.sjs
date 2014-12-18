@@ -10,5 +10,8 @@ macro(@){
     letstx $C=[makeIdent('C',#{$lambda})],$x=[makeIdent('x',#{$lambda})],$y=[makeIdent('y',#{$lambda})],$z=[makeIdent('z',#{$lambda})];
     return #{var $C=(function($x,$y,$z){$body...});$C($args...)}}
   }
-macro(^^){rule{}=>{return}}
+macro(^^){
+  rule{$x:expr $y:expr}=>{if($x)return $y}
+  rule{$x:expr}=>{return $x}
+  rule{}=>{return}}
 macro A{rule{}=>{arguments}}

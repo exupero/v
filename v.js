@@ -18,7 +18,7 @@ tokens=@{[input,st]
       if(stop.indexOf(c)>=0){^^this.backup()}}}
   t.done=@{^^this.peek()==eof}
   t.ignore=@{s=p}
-  t.emit=@{[type,part,f]ts.push({type:type,value:(f||@{[x]^^x})(input.slice(s,p)),part:part});s=p}
+  t.emit=@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p}
   while(st!=N)st=st(t);^^ts}
 
 exports.lex=lex=@{[input]
@@ -72,7 +72,7 @@ exports.lex=lex=@{[input]
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','noun')}else t.emit('int','noun');^^init}
   string=@{[t]
     t.until('"\\');
-    if(t.peek()=='"'){t.emit('string','noun',@{[s]^^s.replace('\\"','"')});t.accept('"');t.ignore();^^init}
+    if(t.peek()=='"'){t.emit('string','noun',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
     else{t.accept('\\');t.accept('"');^^string}}
   each=@{[t]
     switch(t.nextChar()){
@@ -88,18 +88,18 @@ exports.lex=lex=@{[input]
 
 isNum=@{^^x.type=='int'||x.type=='float'}
 expr=@{[ts]
-  if(ts.length==1)^^ts[0];
+  ^^(ts.length==1)ts[0];
   var st,bind,i=ts.length-1;
   st=@{[a,b]
     ^^isNum(a)&&isNum(b)               ? 5
-          :a.type=='vector'&&isNum(b)       ? 5
-          :a.part=='noun'&&b.part=='noun'   ? 1
-          :a.part=='verb'&&b.part=='verb'   ? 1
-          :a.part=='verb'&&b.part=='noun'   ? 2
-          :a.part=='noun'&&b.part=='verb'   ? 3
-          :a.part=='noun'&&b.part=='adverb' ? 4
-          :a.part=='verb'&&b.part=='adverb' ? 4
-          :0}
+     :a.type=='vector'&&isNum(b)       ? 5
+     :a.part=='noun'&&b.part=='noun'   ? 1
+     :a.part=='verb'&&b.part=='verb'   ? 1
+     :a.part=='verb'&&b.part=='noun'   ? 2
+     :a.part=='noun'&&b.part=='verb'   ? 3
+     :a.part=='noun'&&b.part=='adverb' ? 4
+     :a.part=='verb'&&b.part=='adverb' ? 4
+     :0}
   bind=@{[a,b]ts.splice(i-1,2,
      isNum(a)&&isNum(b)               ? {type:'vector',part:'noun',values:[a,b]}
     :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
@@ -134,12 +134,12 @@ wraps=@{[ts]
       var args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
       ^^{type:'func',part:'noun',args:args,body:es}})}
   ^^ts}
-exports.parse=parse=@{[src]^^exprs(wraps(lex(src)))}
+exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 exports.run=@{[src,r,ops]
   eval=@{[tr,r,env]
     ^^udfq(tr.type)                           ? r(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]if(!funq(f))^^error('Not callable: '+f);f.call(N,r,[x])},env)
+     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);f.call(N,r,[x])},env)
      :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,[x,y[0]])})},env)
      :tr.type=='func'                         ? r(@{[R,a]var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
      :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
@@ -154,7 +154,7 @@ exports.run=@{[src,r,ops]
      :error('Invalid AST: '+json(tr))}
   evals=@{[es,r,env]var i=0;@(){i<es.length?eval(es[i++],C,env):r(x)}}
   evall=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r.apply(N,out)};eval(es[i++],C,env)}
-  evalSeq=@{[es,r,env]if(es.length==0)^^r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
+  evalSeq=@{[es,r,env]^^(es.length==0)r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
 var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair;
@@ -177,9 +177,9 @@ arrTseq=@{
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
   s.empty=@{^^s([])}
   ^^s}()
-seqTarr=@{[R,xs]var out=[];@(xs){[ys]if(!ys)^^R(out);ys.first(@{out.push(x);ys.next(C)})}}
+seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
-  var get=@{[r,k]@(ps){[xs]if(!xs)^^r(N);xs.first(@{if(!x)^^r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
+  var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
       d={call:@{[_,r,a]get(r,a[0])},
          get:get,
          assoc:@{[r]},
@@ -199,9 +199,9 @@ reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@{[y]^^y!=null}).length>0?firsts(@{[ys]
 map=@{[R,f]reduce.apply(N,[R,@{[r,m]m.append(r,f.apply(N,sl(A,2)))},A[2].empty()].concat(sl(A,2)))}
 vdoq=@{[a,b]
   ^^(numq(a)||mapq(a)||seqq(a))&&udfq(b)||
-         (numq(a)||mapq(a)||seqq(a))&&numq(b)||
-         (numq(a)||mapq(a))&&mapq(b)||
-         (numq(a)||seqq(b))&&seqq(b)}
+    (numq(a)||mapq(a)||seqq(a))&&numq(b)||
+    (numq(a)||mapq(a))&&mapq(b)||
+    (numq(a)||seqq(b))&&seqq(b)}
 vdo=@{[R,f,a,b]
   numq(a)&&udfq(b)?R(f(a))
  :mapq(a)&&udfq(b)?a.remap(R,@{[r,x]r(f(x))})
@@ -214,17 +214,17 @@ vdo=@{[R,f,a,b]
  :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
  :seqq(a)&&seqq(b)?map(R,f,a,b)
  :R(udf)}
-count=@{[R,xs]var c=0;@(xs){[xss]if(!xss)^^R(c);c++;xss.next(C)}}
-concat=@{[R,xs,ys]@(ys){[zs]if(!zs)^^R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
-reverse=@{[R,xs]var out=arrTseq.empty();@(xs){[ys]if(!ys)^^R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
+count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
+concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
+reverse=@{[R,xs]var out=arrTseq.empty();@(xs){[ys]^^(!ys)R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
 take=@{[R,n,xs]
    n==0?R(xs)
-  :n>0?@{var ys=[];@(xs){[zs]if(!zs||ys.length==n)^^R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}()
+  :n>0?@{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}()
   :n<0?seqTarr(@{R(arrTseq(x.slice(x.length+n)))},xs)
   :udf}
 drop=@{[R,n,xs]
    n==0?R(xs)
-  :n>0?@{var i=0;@(xs){[ys]if(!ys)^^R(N);if(i==n)^^R(ys);i++;ys.next(C)}}()
+  :n>0?@{var i=0;@(xs){[ys]^^(!ys)R(N);^^(i==n)R(ys);i++;ys.next(C)}}()
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
@@ -233,7 +233,7 @@ arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
-    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]if(cs[0]!=cs[1])^^R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
+    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
   plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
   dash:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
