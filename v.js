@@ -182,7 +182,7 @@ seqTdic=@{[R,ps,f]
   var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
       d={call:@{[_,r,a]get(r,a[0])},
          get:get,
-         assoc:@{[r]},
+         assoc:@{[r,a]ps.append(@{seqTdic(r,x,f)},a)},
          dissoc:@{[r]},
          remap:@{[r,g,a]
            udfq(a)&&f ? seqTdic(r,ps,@{[r,x]f(@{g(r,x)},x)})
@@ -274,6 +274,8 @@ exports.defaultOps=({
      :numq(a)&&seqq(b)?b.prepend(R,a)
      :seqq(a)&&numq(b)?R(a.append(b))
      :seqq(a)&&seqq(b)?concat(R,a,b)
+     :seqq(a)&&mapq(b)?b.assoc(R,a)
+     :mapq(a)&&seqq(b)?a.assoc(R,b)
      :invals(',',a,b)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
 });
