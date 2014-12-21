@@ -163,7 +163,7 @@ numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
 funq=ich('call')
 seqq=ich('next','first','prepend','append');
-mapq=ich('get','assoc','dissoc','remap');
+mapq=ich('get','assoc','dissoc','remap','keys','values');
 vecq=@{^^numq(x)||seqq(x)}
 
 strTsym=@{var s={type:'symbol',value:x,
@@ -188,7 +188,9 @@ seqTdic=@{[R,ps,f]
            udfq(a)&&f ? seqTdic(r,ps,@{[r,x]f(@{g(r,x)},x)})
           :udfq(a)    ? seqTdic(r,ps,g)
           :f          ? seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]f(@{g(r,x,v2)},v1,v2)},k)})
-          :seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]g(r,v1,v2)},k)})}};
+          :seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]g(r,v1,v2)},k)})},
+         keys:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
+         values:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   R(d)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
@@ -255,8 +257,12 @@ exports.defaultOps=({
     @{[R,a]vecq(a)?vdo(R,@{^^Math.floor(x)},a):inval('_',a)},
     @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
   caret:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x>y)},a,b):invals('>',a,b)}),
+  langle:arit(
+    @{[R,a]mapq(a)?a.keys(R):inval('<',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x<y)},a,b):invals('<',a,b)}),
+  rangle:arit(
+    @{[R,a]mapq(a)?a.values(R):inval('>',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x>y)},a,b):invals('>',a,b)}),
   amp:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?y:x},a,b):invals('&',a,b)}),
   pipe:arit(
     @{[R,a]seqq(a)?reverse(R,a):inval('|',a)},

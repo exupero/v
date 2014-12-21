@@ -253,6 +253,8 @@ process.stdout.write('\n');
   expect('`a@D()',null);
   expect('`a@(D()),(`a;2)',2);
   expect('`a@(`a;5),D()',5);
+  expect('<D((`a;5);(`c;25))', [{type:'symbol',value:'a'},{type:'symbol',value:'c'}])
+  expect('>D((`a;5);(`c;25))', [5,25])
 })();
 process.stdout.write('\n');
 process.exit(failures);
