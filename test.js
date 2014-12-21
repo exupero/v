@@ -176,6 +176,10 @@ process.stdout.write('\n');
                values:[{type:'symbol',value:'a',part:'noun'},
                        {type:'int',value:'5',part:'noun'}]}]}]);
   expect('()',[{type:'list',part:'noun',values:[]}]);
+  expect('{[a]a}',[
+    {type:'func',part:'noun',
+     args:['a'],
+     body:[{type:'word',value:'a',part:'noun'}]}]);
 })();
 
 (function(){
@@ -266,6 +270,7 @@ process.stdout.write('\n');
   expect('5#(1L{N}),9',[1,9]);
   expect('$5', '5');
   expect('$1 2 3', [1, 2, 3]);
+  expect('{[a]a*2}3',6);
 })();
 process.stdout.write('\n');
 process.exit(failures);

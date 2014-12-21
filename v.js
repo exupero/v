@@ -126,14 +126,15 @@ exprs=@{[ts]
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
 wraps=@{[ts]
-  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){var tss=ts.slice(i+1,j),tss2=tss.slice();ts.splice(i,j-i+1,f(exprs(tss),tss2));^^}unmatched(t.type)};
+  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){ts.splice(i,j-i+1,f(ts.slice(i+1,j)));^^}unmatched(t.type)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
-    if(t.type=='laren')find('raren',@{^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
-    else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:x}});
-    else if(t.type=='lace')find('race',@{[es,tss]
-      var args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
-      ^^{type:'func',part:'noun',args:args,body:es}})}
+    if(t.type=='laren')find('raren',@{var x=exprs(x);^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
+    else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:exprs(x)}});
+    else if(t.type=='lace')find('race',@{[tss]var args;
+      if(tss[0].type=='argList')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
+      else args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
+      ^^{type:'func',part:'noun',args:args,body:exprs(tss)}})}
   ^^ts}
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
