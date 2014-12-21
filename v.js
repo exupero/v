@@ -158,7 +158,7 @@ exports.run=@{[src,r,ops]
   evalSeq=@{[es,r,env]^^(es.length==0)r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
-var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq;
+var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
@@ -178,12 +178,7 @@ arrTseq=@{
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
   s.empty=@{^^s([])}
   ^^s}()
-lazySeq=@{[a,f]^^{
-  empty:arrTseq.empty,
-  first:@{[R]R(a)},
-  next:@{[R]f(@{R(lazySeq(x,f))},a)},
-  prepend:@{[R]},
-  append:@{[R]}}}
+lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
@@ -238,6 +233,12 @@ drop=@{[R,n,xs]
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
+cons=@{[R,x,xs,ys]var s={
+  empty:arrTseq.empty,
+  first:@{[R]x(R)},
+  next:@{[R]xs(@{[n]n?R(n):R(ys||N)})},
+  prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
+  append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 
 arit=@{var arities=A;^^@{[R]var a=sl(A,1);arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
@@ -292,7 +293,7 @@ exports.defaultOps=({
     @{[R,a,b]
       numq(a)&&numq(b)?R(arrTseq([a,b]))
      :numq(a)&&seqq(b)?b.prepend(R,a)
-     :seqq(a)&&numq(b)?R(a.append(b))
+     :seqq(a)&&numq(b)?a.append(R,b)
      :seqq(a)&&seqq(b)?concat(R,a,b)
      :seqq(a)&&mapq(b)?b.assoc(R,a)
      :mapq(a)&&seqq(b)?a.assoc(R,b)
@@ -303,5 +304,5 @@ exports.defaultOps=({
      :seqq(a)?seqTarr(R,a)
      :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
-  lazy:arit(N,@{[R,a,b]R(lazySeq(a,b))}),
+  lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
 });
