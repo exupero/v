@@ -141,9 +141,10 @@ exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 exports.run=@{[src,r,ops]
   eval=@{[tr,r,env]
     ^^udfq(tr.type)                           ? r(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);f.call(N,r,x)},env)
+     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);x.type=='argList'?f.apply(N,[r].concat(x.values)):f.call(N,r,x)},env)
      :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,x,y)})},env)
      :tr.type=='func'                         ? r(@{[R]var a=sl(A,1),i,e={};for(i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
+     :tr.type=='argList'                      ? evall(tr.args,@{r({type:'argList',values:sl(A)})},env)
      :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
      :tr.type=='list'                         ? evalSeq(tr.values,r,env)
      :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})

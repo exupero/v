@@ -271,6 +271,7 @@ process.stdout.write('\n');
   expect('$5', '5');
   expect('$1 2 3', [1, 2, 3]);
   expect('{[a]a*2}3',6);
+  expect('{x*y}[9;5]',45);
 })();
 process.stdout.write('\n');
 process.exit(failures);
