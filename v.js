@@ -64,6 +64,7 @@ exports.lex=lex=@{[input]
         case '}':e('race');break;
         case 'C':e('channel','noun');break;
         case 'D':e('dict','verb');break;
+        case 'L':e('lazy','verb');break;
         case 'N':e('nil','noun');break;
         case '\n':e('semi');break;
         default:t.backup();^^t.accept(digits)?number:word}}}
@@ -157,12 +158,12 @@ exports.run=@{[src,r,ops]
   evalSeq=@{[es,r,env]^^(es.length==0)r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
   evals(parse(src),r,{})}
 
-var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair;
+var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
 funq=ich('call')
-seqq=ich('next','first','prepend','append');
+seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
 
@@ -177,6 +178,12 @@ arrTseq=@{
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
   s.empty=@{^^s([])}
   ^^s}()
+lazySeq=@{[a,f]^^{
+  empty:arrTseq.empty,
+  first:@{[R]R(a)},
+  next:@{[R]f(@{R(lazySeq(x,f))},[a])},
+  prepend:@{[R]},
+  append:@{[R]}}}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
@@ -291,4 +298,5 @@ exports.defaultOps=({
      :mapq(a)&&seqq(b)?a.assoc(R,b)
      :invals(',',a,b)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
+  lazy:arit(N,@{[R,a,b]R(lazySeq(a,b))}),
 });
