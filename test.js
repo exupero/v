@@ -259,6 +259,7 @@ process.stdout.write('\n');
   expect('(D((`a;5);))~D((`a;10);)', 0);
   expect('(D((`a;5);))~D((`b;5);)', 0);
   expect('(D((`a;5);))~D((`b;10);)',0);
+  expect('*5 10 15', 5);
 })();
 process.stdout.write('\n');
 process.exit(failures);

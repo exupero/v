@@ -245,7 +245,9 @@ exports.defaultOps=({
   dash:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
-  star:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
+  star:arit(
+    @{[R,a]seqq(a)?a.first(R):inval('*',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   percent:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
