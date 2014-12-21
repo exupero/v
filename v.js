@@ -297,6 +297,11 @@ exports.defaultOps=({
      :seqq(a)&&mapq(b)?b.assoc(R,a)
      :mapq(a)&&seqq(b)?a.assoc(R,b)
      :invals(',',a,b)}),
+  dollar:arit(
+    @{[R,a]
+      numq(a)?R(''+a)
+     :seqq(a)?seqTarr(R,a)
+     :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]R(lazySeq(a,b))}),
 });

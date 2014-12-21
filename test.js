@@ -261,6 +261,8 @@ process.stdout.write('\n');
   expect('(D((`a;5);))~D((`b;10);)',0);
   expect('*5 10 15',5);
   expect('5#1L{x*2}',[1,2,4,8,16]);
+  expect('$5', '5');
+  expect('$1 2 3', [1, 2, 3]);
 })();
 process.stdout.write('\n');
 process.exit(failures);
