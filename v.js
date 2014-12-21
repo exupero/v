@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eval,evals,evall,evalSeq,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
+var tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
 pt=@{[f]var xs=sl(A,1);^^@{^^f.apply(N,xs.concat(sl(A)))}}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -138,27 +138,31 @@ wraps=@{[ts]
   ^^ts}
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
-exports.run=@{[src,r,ops]
-  eval=@{[tr,r,env]
-    ^^udfq(tr.type)                           ? r(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);x.type=='argList'?f.apply(N,[r].concat(x.values)):f.call(N,r,x)},env)
-     :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,x,y)})},env)
-     :tr.type=='func'                         ? r(@{[R]var a=sl(A,1),i,e={};for(i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
-     :tr.type=='argList'                      ? evall(tr.args,@{r({type:'argList',values:sl(A)})},env)
-     :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
-     :tr.type=='list'                         ? evalSeq(tr.values,r,env)
-     :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})
-     :symq(tr)                                ? r(strTsym(tr.value))
-     :tr.type=='int'                          ? r(parseInt(tr.value))
-     :tr.type=='float'                        ? r(parseFloat(tr.value))
-     :tr.type=='string'                       ? r(tr.value)
-     :tr.type=='nil'                          ? r(N)
-     :ops[tr.type]                            ? r(ops[tr.type])
+exports.run=@{[src,R,ops]
+  var eval,evals,evall,evalSeq,apply;
+  eval=@{[R,tr,env]
+    ^^udfq(tr.type)                           ? R(tr)
+     :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],env)
+     :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],env)
+     :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e={};for(i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(R,tr.body,e)})
+     :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,env)
+     :tr.type=='vector'                       ? evalSeq(R,tr.values,env)
+     :tr.type=='list'                         ? evalSeq(R,tr.values,env)
+     :tr.type=='word'                         ? eval(R,env[tr.value]||ops[tr.value],{})
+     :symq(tr)                                ? R(strTsym(tr.value))
+     :tr.type=='int'                          ? R(parseInt(tr.value))
+     :tr.type=='float'                        ? R(parseFloat(tr.value))
+     :tr.type=='string'                       ? R(tr.value)
+     :tr.type=='nil'                          ? R(N)
+     :ops[tr.type]                            ? R(ops[tr.type])
      :error('Invalid AST: '+json(tr))}
-  evals=@{[es,r,env]var i=0;@(){i<es.length?eval(es[i++],C,env):r(x)}}
-  evall=@{[es,r,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r.apply(N,out)};eval(es[i++],C,env)}
-  evalSeq=@{[es,r,env]^^(es.length==0)r(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(es[i++],C,env):r(arrTseq(out))};eval(es[i++],C,env)}
-  evals(parse(src),r,{})}
+  evals=@{[R,es,env]var i=0;@(){i<es.length?eval(C,es[i++],env):R(x)}}
+  evall=@{[R,es,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],env):R.apply(N,out)};eval(C,es[i++],env)}
+  evalSeq=@{[R,es,env]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],env):R(arrTseq(out))};eval(C,es[i++],env)}
+  apply=@{[R,f,a]
+    a.type=='argList'?f.apply(N,[R].concat(a.values))
+   :f.call(N,R,a)}
+  evals(R,parse(src),{})}
 
 var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
@@ -183,19 +187,19 @@ arrTseq=@{
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
-  var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
-      d={call:@{[_,r,k]get(r,k)},
+  var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
+      d={call:@{[_,R,k]get(R,k)},
          get:get,
-         assoc:@{[r,a]ps.append(@{seqTdic(r,x,f)},a)},
-         dissoc:@{[r]},
-         remap:@{[r,g,a]
-           udfq(a)&&f ? seqTdic(r,ps,@{[r,x]f(@{g(r,x)},x)})
-          :udfq(a)    ? seqTdic(r,ps,g)
-          :f          ? seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]f(@{g(r,x,v2)},v1,v2)},k)})
-          :seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]g(r,v1,v2)},k)})},
-         matches:@{[r,a]@(ps){[xs]^^(!xs)r(1);xs.first(@{pair(@{[k,v]a.get(@{r(bl(x==v))},k)},x)})}},
-         keys:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
-         values:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
+         assoc:@{[R,a]ps.append(@{seqTdic(R,x,f)},a)},
+         dissoc:@{[R]},
+         remap:@{[R,g,a]
+           udfq(a)&&f ? seqTdic(R,ps,@{[R,x]f(@{g(R,x)},x)})
+          :udfq(a)    ? seqTdic(R,ps,g)
+          :f          ? seqTdic(R,ps,@{[R,v1,k]a.get(@{[v2]f(@{g(R,x,v2)},v1,v2)},k)})
+          :seqTdic(R,ps,@{[R,v1,k]a.get(@{[v2]g(R,v1,v2)},k)})},
+         matches:@{[R,a]@(ps){[xs]^^(!xs)R(1);xs.first(@{pair(@{[k,v]a.get(@{R(bl(x==v))},k)},x)})}},
+         keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
+         values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   R(d)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
@@ -203,7 +207,7 @@ nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)}
 counts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?count(C,xs[i++]):R(out)};count(C,xs[i++])}
 
 reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@{[y]^^y!=null}).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
-map=@{[R,f]reduce.apply(N,[R,@{[r,m]m.append(r,f.apply(N,sl(A,2)))},A[2].empty()].concat(sl(A,2)))}
+map=@{[R,f]reduce.apply(N,[R,@{[R,m]m.append(R,f.apply(N,sl(A,2)))},A[2].empty()].concat(sl(A,2)))}
 vdoq=@{[a,b]
   ^^(numq(a)||mapq(a)||seqq(a))&&udfq(b)||
     (numq(a)||mapq(a)||seqq(a))&&numq(b)||
@@ -211,12 +215,12 @@ vdoq=@{[a,b]
     (numq(a)||seqq(b))&&seqq(b)}
 vdo=@{[R,f,a,b]
   numq(a)&&udfq(b)?R(f(a))
- :mapq(a)&&udfq(b)?a.remap(R,@{[r,x]r(f(x))})
+ :mapq(a)&&udfq(b)?a.remap(R,@{[R,x]R(f(x))})
  :seqq(a)&&udfq(b)?map(R,f,a)
  :numq(a)&&numq(b)?R(f(a,b))
- :mapq(a)&&numq(b)?a.remap(R,@{[r,x]r(f(x,b))})
- :numq(a)&&mapq(b)?b.remap(R,@{[r,x]r(f(a,x))})
- :mapq(a)&&mapq(b)?a.remap(R,@{[r,x,y]r(f(x,y))},b)
+ :mapq(a)&&numq(b)?a.remap(R,@{[R,x]R(f(x,b))})
+ :numq(a)&&mapq(b)?b.remap(R,@{[R,x]R(f(a,x))})
+ :mapq(a)&&mapq(b)?a.remap(R,@{[R,x,y]R(f(x,y))},b)
  :seqq(a)&&numq(b)?R(map(@{^^f(x,b)},a))
  :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
  :seqq(a)&&seqq(b)?map(R,f,a,b)
@@ -248,7 +252,7 @@ exports.defaultOps=({
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(bl(a==b))
-     :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b])
+     :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)},[a,b])
      :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
      :invals('~',a,b)}),
   plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
