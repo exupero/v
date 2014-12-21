@@ -141,7 +141,7 @@ exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 exports.run=@{[src,R,ops]
   var eval,evals,evall,evalSeq,apply;
   eval=@{[R,tr,env]
-    ^^udfq(tr.type)                           ? R(tr)
+    ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],env)
      :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],env)
      :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e={};for(i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(R,tr.body,e)})
@@ -160,8 +160,9 @@ exports.run=@{[src,R,ops]
   evall=@{[R,es,env]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],env):R.apply(N,out)};eval(C,es[i++],env)}
   evalSeq=@{[R,es,env]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],env):R(arrTseq(out))};eval(C,es[i++],env)}
   apply=@{[R,f,a]
-    a.type=='argList'?f.apply(N,[R].concat(a.values))
-   :f.call(N,R,a)}
+    a.type!='argList'               ? f.call(N,R,a)
+   :a.values.filter(udfq).length==0 ? f.apply(N,[R].concat(a.values))
+   :R(@{[R]var b=sl(A,1);apply(R,f,{type:'argList',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
   evals(R,parse(src),{})}
 
 var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons;
