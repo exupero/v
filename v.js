@@ -163,7 +163,7 @@ numq=pt(to,'number')
 symq=@{^^x.type=='symbol'}
 funq=ich('call')
 seqq=ich('next','first','prepend','append');
-mapq=ich('get','assoc','dissoc','remap','keys','values');
+mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
 
 strTsym=@{var s={type:'symbol',value:x,
@@ -189,6 +189,7 @@ seqTdic=@{[R,ps,f]
           :udfq(a)    ? seqTdic(r,ps,g)
           :f          ? seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]f(@{g(r,x,v2)},v1,v2)},k)})
           :seqTdic(r,ps,@{[r,v1,k]a.get(@{[v2]g(r,v1,v2)},k)})},
+         matches:@{[r,a]@(ps){[xs]^^(!xs)r(1);xs.first(@{pair(@{[k,v]a.get(@{r(bl(x==v))},k)},x)})}},
          keys:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
          values:@{[r]var out=[];@(ps){[xs]^^(!xs)r(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   R(d)}
@@ -235,7 +236,11 @@ arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
-    @{[R,a,b]numq(a)&&numq(b)?R(bl(a==b)):seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b]):invals('~',a,b)}),
+    @{[R,a,b]
+      numq(a)&&numq(b)?R(bl(a==b))
+     :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[r,m,x,y]r(m&x==y)},1,a,b)},[a,b])
+     :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
+     :invals('~',a,b)}),
   plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
   dash:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
