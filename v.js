@@ -140,9 +140,9 @@ exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 exports.run=@{[src,r,ops]
   eval=@{[tr,r,env]
     ^^udfq(tr.type)                           ? r(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);f.call(N,r,[x])},env)
-     :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,[x,y[0]])})},env)
-     :tr.type=='func'                         ? r(@{[R,a]var e={};for(var i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
+     :tr.type=='apply'||tr.type=='applyMonad' ? evall([tr.func,tr.arg],@{[f,x]^^(!funq(f))error('Not callable: '+f);f.call(N,r,x)},env)
+     :tr.type=='curry'                        ? evall([tr.func,tr.arg],@{[f,x]r(@{[R,y]f(R,x,y)})},env)
+     :tr.type=='func'                         ? r(@{[R]var a=sl(A,1),i,e={};for(i=0;i<tr.args.length;i++)e[tr.args[i]]=a[i];evals(tr.body,R,e)})
      :tr.type=='vector'                       ? evalSeq(tr.values,r,env)
      :tr.type=='list'                         ? evalSeq(tr.values,r,env)
      :tr.type=='word'                         ? eval(env[tr.value]||ops[tr.value],r,{})
@@ -168,7 +168,7 @@ mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
 
 strTsym=@{var s={type:'symbol',value:x,
-  call:@{[N,R,a]a.call(N,R,[s])}};^^s}
+  call:@{[N,R,a]a.call(N,R,s)}};^^s}
 arrTseq=@{
   var s=@{[xs]^^{
     empty:s.empty,
@@ -181,13 +181,13 @@ arrTseq=@{
 lazySeq=@{[a,f]^^{
   empty:arrTseq.empty,
   first:@{[R]R(a)},
-  next:@{[R]f(@{R(lazySeq(x,f))},[a])},
+  next:@{[R]f(@{R(lazySeq(x,f))},a)},
   prepend:@{[R]},
   append:@{[R]}}}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[r,k]@(ps){[xs]^^(!xs)r(N);xs.first(@{^^(!x)r(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(r,b,k):r(b)):xs.next(C)},x)})}},
-      d={call:@{[_,r,a]get(r,a[0])},
+      d={call:@{[_,r,k]get(r,k)},
          get:get,
          assoc:@{[r,a]ps.append(@{seqTdic(r,x,f)},a)},
          dissoc:@{[r]},
@@ -239,7 +239,7 @@ drop=@{[R,n,xs]
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 
-arit=@{var arities=A;^^@{[R,a]arities[a.length-1].apply(N,[R].concat(a))}}
+arit=@{var arities=A;^^@{[R]var a=sl(A,1);arities[a.length-1].apply(N,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
