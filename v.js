@@ -147,6 +147,7 @@ exports.run=@{[src,R,ops]
      :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))})
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
+     :tr.type=='channel'                      ? R(channel())
      :tr.type=='list'                         ? evalSeq(R,tr.values,e)
      :tr.type=='word'                         ? eval(R,find(tr.value,e),N)
      :symq(tr)                                ? R(strTsym(tr.value))
@@ -166,15 +167,17 @@ exports.run=@{[src,R,ops]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evals(R,parse(src),[{}])}
 
-var numq,mapq,seqq,vecq,funq,symq,vdoq,ich,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons,channel;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
-numq=pt(to,'number')
+numq=pt(to,'number');
 symq=@{^^x.type=='symbol'}
-funq=ich('call')
+funq=ich('call');
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
+chaq=ich('put','take');
 
+channel=@{var s={put:@{s.values.push(x)},take:@{[R]R(s.values.shift())},values:[]};^^s}
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[N,R,a]a.call(N,R,s)}};^^s}
 arrTseq=@{
@@ -262,14 +265,20 @@ exports.defaultOps=({
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
   star:arit(
-    @{[R,a]seqq(a)?a.first(R):inval('*',a)},
+    @{[R,a]
+      seqq(a)?a.first(R)
+     :chaq(a)?a.take(R)
+     :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   percent:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
   bang:arit(
     @{[R,a]numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}():inval('!',a)},
-    @{[R,a,b]numq(a)&&numq(b)?R(a%b):invals('!',a,b)}),
+    @{[R,a,b]
+      numq(a)&&numq(b) ? R(a%b)
+     :chaq(a)          ? @{a.put(b);R(a)}()
+     :invals('!',a,b)}),
   at:arit(
     @{[R,a]R(bl(numq(a)||symq(a)))},
     @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
