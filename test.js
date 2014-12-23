@@ -180,6 +180,14 @@ process.stdout.write('\n');
     {type:'func',part:'noun',
      args:['a'],
      body:[{type:'word',value:'a',part:'noun'}]}]);
+  expect('{{x}5}',[
+    {type:'func',part:'noun',
+     args:[],
+     body:[{type:'apply',part:'noun',
+            func:{type:'func',part:'noun',
+                  args:['x'],
+                  body:[{type:'word',value:'x',part:'noun'}]},
+            arg:{type:'int',value:'5',part:'noun'}}]}]);
 })();
 
 (function(){
@@ -273,6 +281,7 @@ process.stdout.write('\n');
   expect('{[a]a*2}3',6);
   expect('{x*y}[9;5]',45);
   expect('({x*y}[9;])4',36);
+  expect('{[a]a+({x}1)}15',16);
 })();
 process.stdout.write('\n');
 process.exit(failures);
