@@ -6,7 +6,7 @@ build/v.js: macros.sjs v.js
 	cat macros.sjs v.js | sjs -s > build/v.js
 
 build/v.min.js: build/v.js
-	cat build/v.js | uglifyjs -m toplevel > build/v.min.js
+	cat build/v.js | uglifyjs -c -m toplevel >build/v.min.js 2>/dev/null
 
 test: build/v.js build/v.min.js
 	$(NODE) test.js ./build/v

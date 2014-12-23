@@ -66,6 +66,7 @@ exports.lex=lex=@{[input]
         case 'D':e('dict','verb');break;
         case 'L':e('lazy','verb');break;
         case 'N':e('nil','noun');break;
+        case 'Y':e('fork','verb');break;
         case '\n':e('semi');break;
         default:t.backup();^^t.accept(digits)?number:word}}}
   word=@{[t]t.until(stop);t.emit('word','noun');^^init}
@@ -139,7 +140,7 @@ wraps=@{[ts]
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 exports.run=@{[src,R,ops]
-  var eval,evals,evall,evalSeq,curry,apply,find;
+  var eval,evals,evall,evalSeq,curry,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],e)
@@ -148,6 +149,7 @@ exports.run=@{[src,R,ops]
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
      :tr.type=='channel'                      ? R(channel())
+     :tr.type=='fork'                         ? R(@{[R,f]forks.push(@{f(@{})});R(N)})
      :tr.type=='list'                         ? evalSeq(R,tr.values,e)
      :tr.type=='word'                         ? eval(R,find(tr.value,e),N)
      :symq(tr)                                ? R(strTsym(tr.value))
@@ -162,11 +164,12 @@ exports.run=@{[src,R,ops]
   evalSeq=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
   curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
-    a.type!='argList'               ? f.call(N,R,a)
-   :a.values.filter(udfq).length==0 ? f.apply(N,[R].concat(a.values))
+    a.type!='argList'               ? f.call(sched,R,a)
+   :a.values.filter(udfq).length==0 ? f.apply(sched,[R].concat(a.values))
    :R(@{[R]var b=sl(A,1);apply(R,f,{type:'argList',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
-  evals(R,parse(src),[{}])}
+  evals(R,parse(src),[{}]);
+  while(forks.length>0)forks.shift()()}
 
 var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons,channel;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
@@ -252,7 +255,7 @@ cons=@{[R,x,xs,ys]var s={
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 
-arit=@{var arities=A;^^@{[R]var a=sl(A,1);arities[a.length-1].apply(N,[R].concat(a))}}
+arit=@{var arities=A;^^@{[R]var a=sl(A,1);arities[a.length-1].apply(this,[R].concat(a))}}
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
@@ -266,9 +269,9 @@ exports.defaultOps=({
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
   star:arit(
-    @{[R,a]
+    @{[R,a]var sched=this;
       seqq(a)?a.first(R)
-     :chaq(a)?a.take(R)
+     :chaq(a)?@{var C=@{a.values.length==0?sched.suspend(C):a.take(R)};C()}()
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   percent:arit(

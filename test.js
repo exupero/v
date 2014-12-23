@@ -283,7 +283,7 @@ process.stdout.write('\n');
   expect('({x*y}[9;])4',36);
   expect('{[a]a+({x}1)}15',16);
   expect('a:2;a',2);
-  expect('*C!5',5);
+  expect('c:C;Y{c!5};*c',5);
 })();
 process.stdout.write('\n');
 process.exit(failures);
