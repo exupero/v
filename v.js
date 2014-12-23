@@ -139,11 +139,11 @@ wraps=@{[ts]
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 exports.run=@{[src,R,ops]
-  var eval,evals,evall,evalSeq,apply,find;
+  var eval,evals,evall,evalSeq,curry,apply,find;
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],e)
-     :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],e)
+     :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
      :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))})
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
@@ -160,6 +160,7 @@ exports.run=@{[src,R,ops]
   evals=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
   evall=@{[R,es,e]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,out)};eval(C,es[i++],e)}
   evalSeq=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
+  curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
     a.type!='argList'               ? f.call(N,R,a)
    :a.values.filter(udfq).length==0 ? f.apply(N,[R].concat(a.values))
