@@ -144,13 +144,13 @@ wraps=@{[ts]
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 exports.run=@{[src,R,ops]
-  var eval,evals,evall,evalSeq,curry,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
+  var eval,evals,evall,evalSeq,curry,apply,find,arity=@{[f,a]f.arity=a;^^f},forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],e)
      :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
-     :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))})
+     :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
      :tr.type=='channel'                      ? R(channel())
@@ -334,5 +334,8 @@ exports.defaultOps=({
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   each:aarit(@{[R,f,a]mappedSeq(R,a,f)}),
   eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}),
-  slash:aarit(@{[R,f,a]var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}),
+  slash:aarit(
+    @{[R,f,a]
+      if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}
+    }),
 });
