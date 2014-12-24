@@ -265,7 +265,7 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 teq=@{^^x==y||Math.abs(x-y)<1e-10}
 
-var arit=@{var ars=A;^^@{ars[A.length-2].apply(this,A)}},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
+var arit=@{var ars=A,f=@{ars[A.length-2].apply(this,A)};f.arity=2;^^f},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
@@ -346,7 +346,7 @@ exports.defaultOps=({
   slash:aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
-      else if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
+      else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
     @{[R,f,a,b]
       numq(a)?@{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}()
      :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
