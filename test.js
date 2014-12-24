@@ -136,11 +136,11 @@ process.stdout.write('\n');
              {type:'int',value:'5',part:'noun'}]}]);
   expect('[x;y]',[
     {type:'argList',part:'noun',
-      args:[{type:'word',value:'x',part:'noun'},
-            {type:'word',value:'y',part:'noun'}]}]);
+     args:[{type:'word',value:'x',part:'noun'},
+           {type:'word',value:'y',part:'noun'}]}]);
   expect('{x*2}',[
     {type:'func',part:'noun',
-     args:['x','y','z'],
+     args:['x'],
      body:[{type:'applyMonad',part:'noun',
             func:{type:'curry',part:'verb',
                   func:{type:'star',value:'*',part:'verb'},
@@ -182,12 +182,14 @@ process.stdout.write('\n');
      body:[{type:'word',value:'a',part:'noun'}]}]);
   expect('{{x}5}',[
     {type:'func',part:'noun',
-     args:['x','y','z'],
+     args:[],
      body:[{type:'apply',part:'noun',
             func:{type:'func',part:'noun',
-                  args:['x','y','z'],
+                  args:['x'],
                   body:[{type:'word',value:'x',part:'noun'}]},
             arg:{type:'int',value:'5',part:'noun'}}]}]);
+  expect('{y}',[{type:'func',part:'noun',args:['x','y'],body:[{type:'word',value:'y',part:'noun'}]}]);
+  expect('{z}',[{type:'func',part:'noun',args:['x','y','z'],body:[{type:'word',value:'z',part:'noun'}]}]);
 })();
 
 (function(){

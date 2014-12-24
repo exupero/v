@@ -134,7 +134,11 @@ wraps=@{[ts]
     else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:exprs(x)}});
     else if(t.type=='lace')find('race',@{[tss]var args;
       if(tss[0].type=='argList')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
-      else args=['x','y','z'];
+      else{var a=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
+        if(a.indexOf('z')!=-1)args=['x','y','z'];
+        else if(a.indexOf('y')!=-1)args=['x','y'];
+        else if(a.indexOf('x')!=-1)args=['x'];
+        else args=[]}
       ^^{type:'func',part:'noun',args:args,body:exprs(tss)}})}
   ^^ts}
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
