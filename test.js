@@ -135,7 +135,7 @@ process.stdout.write('\n');
                       {type:'int',value:'4',part:'noun'}]},
              {type:'int',value:'5',part:'noun'}]}]);
   expect('[x;y]',[
-    {type:'argList',part:'noun',
+    {type:'arglist',part:'noun',
      args:[{type:'word',value:'x',part:'noun'},
            {type:'word',value:'y',part:'noun'}]}]);
   expect('{x*2}',[

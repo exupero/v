@@ -131,9 +131,9 @@ wraps=@{[ts]
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
     if(t.type=='laren')find('raren',@{var x=exprs(x);^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
-    else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:exprs(x)}});
+    else if(t.type=='lacket')find('racket',@{^^{type:'arglist',part:'noun',args:exprs(x)}});
     else if(t.type=='lace')find('race',@{[tss]var args;
-      if(tss[0].type=='argList')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
+      if(tss[0].type=='arglist')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
       else{var a=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
         if(a.indexOf('z')!=-1)args=['x','y','z'];
         else if(a.indexOf('y')!=-1)args=['x','y'];
@@ -147,11 +147,11 @@ exports.run=@{[src,R,ops]
   var eval,evalss,evall,evals,evala,evalc,curry,apply,find,arity=@{[f,a]f.arity=a;^^f},forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='argList'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
+     :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
      :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
      :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
-     :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
+     :tr.type=='arglist'                      ? evall(@{R({type:'arglist',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evals(R,tr.values,e)
      :tr.type=='channel'                      ? R(channel())
      :tr.type=='fork'                         ? R(@{[R,f]forks.push(@{f(@{})});R(N)})
@@ -171,9 +171,9 @@ exports.run=@{[src,R,ops]
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
-    a.type!='argList'               ? f.call(sched,R,a)
+    a.type!='arglist'               ? f.call(sched,R,a)
    :a.values.filter(udfq).length==0 ? f.apply(sched,[R].concat(a.values))
-   :R(@{[R]var b=sl(A,1);apply(R,f,{type:'argList',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
+   :R(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
