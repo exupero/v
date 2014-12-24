@@ -340,7 +340,10 @@ exports.defaultOps=({
   slash:aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
-      else if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}
-    }),
+      else if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
+    @{[R,f,a,b]
+      numq(a)?@{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}()
+     :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
+     :invals('f/',a,b)}),
   bash:aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 });
