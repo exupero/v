@@ -107,10 +107,10 @@ expr=@{[ts]
     :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
     :a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
     :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
-    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,noun:a}
+    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,arg:a}
     :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
     :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'verb',f:a,g:b}
-    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,verb:a}
+    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,arg:a}
     :error('Invalid operation: '+a.value+' '+b.value))};
   while(ts.length>1){
     i=i>ts.length-1?ts.length-1:i;
@@ -134,7 +134,7 @@ wraps=@{[ts]
     else if(t.type=='lacket')find('racket',@{^^{type:'argList',part:'noun',args:exprs(x)}});
     else if(t.type=='lace')find('race',@{[tss]var args;
       if(tss[0].type=='argList')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
-      else args=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
+      else args=['x','y','z'];
       ^^{type:'func',part:'noun',args:args,body:exprs(tss)}})}
   ^^ts}
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
@@ -145,6 +145,7 @@ exports.run=@{[src,R,ops]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],e)
      :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
+     :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
      :tr.type=='func'                         ? R(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))})
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
@@ -171,7 +172,7 @@ exports.run=@{[src,R,ops]
   evals(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,cons,channel;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 symq=@{^^x.type=='symbol'}
@@ -194,6 +195,7 @@ arrTseq=@{
   s.empty=@{^^s([])}
   ^^s}()
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
+mappedSeq=@{[R,s,f]cons(R,@{[R]s.first(@{f(R,x)})},@{[R]s.next(@{x?mappedSeq(R,x,f):N})})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
@@ -326,4 +328,5 @@ exports.defaultOps=({
      :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
+  each:@{[R,f]R(arit(@{[R,a]mappedSeq(R,a,f)}))},
 });

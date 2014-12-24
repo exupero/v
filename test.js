@@ -68,28 +68,28 @@ process.stdout.write('\n');
   var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
   expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
   expect('1+',[{type:'curry',part:'verb',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
-  expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},noun:{type:'int',value:'1',part:'noun'}}]);
+  expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("+1",[{type:'applyMonad',part:'noun',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("+-",[{type:'compose',part:'verb',f:{type:'plus',value:'+',part:'verb'},g:{type:'dash',value:'-',part:'verb'}}]);
-  expect("+/",[{type:'modVerb',part:'verb',mod:{type:'slash',value:'/',part:'adverb'},verb:{type:'plus',value:'+',part:'verb'}}]);
+  expect("+/",[{type:'modVerb',part:'verb',mod:{type:'slash',value:'/',part:'adverb'},arg:{type:'plus',value:'+',part:'verb'}}]);
   expect("1+/",[
     {type:'curry',part:'verb',
      func:{type:'modVerb',part:'verb',
            mod:{type:'slash',value:'/',part:'adverb'},
-           verb:{type:'plus',value:'+',part:'verb'}},
+           arg:{type:'plus',value:'+',part:'verb'}},
      arg:{type:'int',value:'1',part:'noun'}}]);
   expect("+/1",[
     {type:'applyMonad',part:'noun',
      func:{type:'modVerb',part:'verb',
            mod:{type:'slash',value:'/',part:'adverb'},
-           verb:{type:'plus',value:'+',part:'verb'}},
+           arg:{type:'plus',value:'+',part:'verb'}},
      arg:{type:'int',value:'1',part:'noun'}}]);
   expect("2+/1",[
     {type:'applyMonad',part:'noun',
      func:{type:'curry',part:'verb',
            func:{type:'modVerb',part:'verb',
                  mod:{type:'slash',value:'/',part:'adverb'},
-                 verb:{type:'plus',value:'+',part:'verb'}},
+                 arg:{type:'plus',value:'+',part:'verb'}},
            arg:{type:'int',value:'2',part:'noun'}},
      arg:{type:'int',value:'1',part:'noun'}}]);
   expect('a;b',[{type:'word',value:'a',part:'noun'},{type:'word',value:'b',part:'noun'}]);
@@ -99,7 +99,7 @@ process.stdout.write('\n');
      arg:{type:'word',value:'a',part:'noun'}},
     {type:'modNoun',part:'verb',
      mod:{type:'slash',value:'/',part:'adverb'},
-     noun:{type:'word',value:'b',part:'noun'}}]);
+     arg:{type:'word',value:'b',part:'noun'}}]);
   expectFailure('1-(}')
   expect('1-(2*3)+4',[
     {type:'applyMonad',part:'noun',
@@ -140,7 +140,7 @@ process.stdout.write('\n');
             {type:'word',value:'y',part:'noun'}]}]);
   expect('{x*2}',[
     {type:'func',part:'noun',
-     args:['x'],
+     args:['x','y','z'],
      body:[{type:'applyMonad',part:'noun',
             func:{type:'curry',part:'verb',
                   func:{type:'star',value:'*',part:'verb'},
@@ -182,10 +182,10 @@ process.stdout.write('\n');
      body:[{type:'word',value:'a',part:'noun'}]}]);
   expect('{{x}5}',[
     {type:'func',part:'noun',
-     args:[],
+     args:['x','y','z'],
      body:[{type:'apply',part:'noun',
             func:{type:'func',part:'noun',
-                  args:['x'],
+                  args:['x','y','z'],
                   body:[{type:'word',value:'x',part:'noun'}]},
             arg:{type:'int',value:'5',part:'noun'}}]}]);
 })();
@@ -284,6 +284,8 @@ process.stdout.write('\n');
   expect('{[a]a+({x}1)}15',16);
   expect('a:2;a',2);
   expect('c:C;Y{c!5};*c',5);
+  expect('{x*x}\'1 2 3 4',[1,4,9,16]);
+  expect('~\'1 2 3 4',[1,4,9,16]);
 })();
 process.stdout.write('\n');
 process.exit(failures);
