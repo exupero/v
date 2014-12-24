@@ -144,18 +144,18 @@ wraps=@{[ts]
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 exports.run=@{[src,R,ops]
-  var eval,evals,evall,evalSeq,curry,apply,find,arity=@{[f,a]f.arity=a;^^f},forks=[],sched={suspend:@{forks.push(x)}};
+  var eval,evalss,evall,evals,evala,evalc,curry,apply,find,arity=@{[f,a]f.arity=a;^^f},forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
-     :tr.type=='apply'||tr.type=='applyMonad' ? evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[tr.func,tr.arg],e)
+     :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='argList'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
      :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
-     :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evals(R,tr.body,e.concat([e2]))},tr.args.length))
+     :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.type=='argList'                      ? evall(@{R({type:'argList',values:sl(A)})},tr.args,e)
-     :tr.type=='vector'                       ? evalSeq(R,tr.values,e)
+     :tr.type=='vector'                       ? evals(R,tr.values,e)
      :tr.type=='channel'                      ? R(channel())
      :tr.type=='fork'                         ? R(@{[R,f]forks.push(@{f(@{})});R(N)})
-     :tr.type=='list'                         ? evalSeq(R,tr.values,e)
+     :tr.type=='list'                         ? evals(R,tr.values,e)
      :tr.type=='word'                         ? eval(R,find(tr.value,e),N)
      :symq(tr)                                ? R(strTsym(tr.value))
      :tr.type=='int'                          ? R(parseInt(tr.value))
@@ -164,16 +164,18 @@ exports.run=@{[src,R,ops]
      :tr.type=='nil'                          ? R(N)
      :ops[tr.type]                            ? R(ops[tr.type])
      :error('Invalid AST: '+json(tr))}
-  evals=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
+  evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
   evall=@{[R,es,e]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,out)};eval(C,es[i++],e)}
-  evalSeq=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
+  evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
+  evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[f,x],e)}
+  evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
     a.type!='argList'               ? f.call(sched,R,a)
    :a.values.filter(udfq).length==0 ? f.apply(sched,[R].concat(a.values))
    :R(@{[R]var b=sl(A,1);apply(R,f,{type:'argList',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
-  evals(R,parse(src),[{}]);
+  evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
 var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel;
