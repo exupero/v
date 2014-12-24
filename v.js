@@ -178,7 +178,7 @@ exports.run=@{[src,R,ops]
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel,teq;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 symq=@{^^x.type=='symbol'}
@@ -262,6 +262,7 @@ cons=@{[R,x,xs,ys]var s={
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
+teq=@{^^x==y||Math.abs(x-y)<1e-10}
 
 var arit=@{var ars=A;^^@{ars[A.length-2].apply(this,A)}},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 exports.defaultOps=({
@@ -338,7 +339,8 @@ exports.defaultOps=({
   eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}),
   slash:aarit(
     @{[R,f,a]
-      if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}
+      if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
+      else if(udfq(f.arity)||f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}
     }),
   bash:aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 });

@@ -197,7 +197,10 @@ process.stdout.write('\n');
     if(v&&v.first&&v.next){var a=[],next=function(xs){if(!xs){R(a);return}xs.first(function(x){ar(function(xr){a.push(xr);xs.next(next)},x)})};next(v)}
     else R(v)},
       expect=function(src,x){
-    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}success()},r)},v.defaultOps)}
+    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){
+      if(x&&x.call){if(!x(r)){err('`'+src+'` == '+r+' and does not pass check');failures=1;return}}
+      else if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}
+      success()},r)},v.defaultOps)}
     try{go()}catch(e){err(e)}
     if(!c){err('`'+src+'` does not return a result');failures=1}}
   expect('{x*2}2',4);
@@ -295,6 +298,7 @@ process.stdout.write('\n');
   expect('~\'0 2 0 4',[1,0,1,0]);
   expect('*\':1 2 3 4 5',[2,6,12,20]);
   expect('+/1 2 3',6);
+  expect('{x%2}/30',function(x){return x<1e-10});
   expect('{x+2*y}/1 2 3',11);
   expect('+\\1 2 3 4',[1,3,6,10]);
   expect('{x+2*y}\\1 2 3 4',[1,5,11,19]);
