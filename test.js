@@ -304,6 +304,8 @@ process.stdout.write('\n');
   expect('{x+2*y}/1 2 3',11);
   expect('+\\1 2 3 4',[1,3,6,10]);
   expect('{x+2*y}\\1 2 3 4',[1,5,11,19]);
+  expect('2#\'/("alpha";"bravo";"charlie")',['al','br','ch']);
+  expect('0 1 2 3#\'\\"alpha"',['','a','al','alp']);
 })();
 process.stdout.write('\n');
 process.exit(failures);

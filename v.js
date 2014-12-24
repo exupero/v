@@ -178,9 +178,10 @@ exports.run=@{[src,R,ops]
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel,teq;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel,teq;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
+strq=pt(to,'string');
 symq=@{^^x.type=='symbol'}
 funq=ich('call');
 seqq=ich('empty','next','first','prepend','append');
@@ -297,7 +298,10 @@ exports.defaultOps=({
     @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
   hash:arit(
     @{[R,a]seqq(a)?count(R,a):inval('#',a)},
-    @{[R,a,b]numq(a)&&seqq(b)?take(R,a,b):invals('#',a,b)}),
+    @{[R,a,b]
+      numq(a)&&seqq(b)?take(R,a,b)
+     :numq(a)&&strq(b)?R(b.slice(0,a))
+     :invals('#',a,b)}),
   under:arit(
     @{[R,a]vecq(a)?vdo(R,@{^^Math.floor(x)},a):inval('_',a)},
     @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
@@ -337,6 +341,8 @@ exports.defaultOps=({
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   each:aarit(@{[R,f,a]mappedSeq(R,a,f)}),
   eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}),
+  eachRight:aarit(N,@{[R,f,a,b]mappedSeq(R,b,@{[R,x]f(R,a,x)})}),
+  eachLeft:aarit(N,@{[R,f,a,b]mappedSeq(R,a,@{[R,x]f(R,x,b)})}),
   slash:aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
