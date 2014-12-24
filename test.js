@@ -287,6 +287,8 @@ process.stdout.write('\n');
   expect('{x*x}\'1 2 3 4',[1,4,9,16]);
   expect('~\'0 2 0 4',[1,0,1,0]);
   expect('*\':1 2 3 4 5',[2,6,12,20]);
+  expect('+/1 2 3',6);
+  expect('{x+2*y}/1 2 3',11);
 })();
 process.stdout.write('\n');
 process.exit(failures);

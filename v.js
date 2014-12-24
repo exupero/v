@@ -172,7 +172,7 @@ exports.run=@{[src,R,ops]
   evals(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,arit,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,pairedSeq,cons,channel;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 symq=@{^^x.type=='symbol'}
@@ -196,7 +196,6 @@ arrTseq=@{
   ^^s}()
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 mappedSeq=@{[R,s,f]cons(R,@{[R]s.first(@{f(R,x)})},@{[R]s.next(@{x?mappedSeq(R,x,f):R(N)})})}
-pairedSeq=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?pairedSeq(R,xs):R(N)})})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
@@ -254,11 +253,11 @@ pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 cons=@{[R,x,xs,ys]var s={
   empty:arrTseq.empty,
   first:@{[R]x(R)},
-  next:@{[R]xs(@{[n]n?R(n):R(ys||N)})},
+  next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 
-arit=@{var arities=A;^^@{[R]var a=sl(A,1);arities[a.length-1].apply(this,[R].concat(a))}}
+var arit=@{var ars=A;^^@{ars[A.length-2].apply(this,A)}},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
@@ -329,6 +328,7 @@ exports.defaultOps=({
      :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
-  each:@{[R,f]R(arit(@{[R,a]mappedSeq(R,a,f)}))},
-  eachPair:@{[R,f]R(arit(@{[R,a]pairedSeq(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}))},
+  each:aarit(@{[R,f,a]mappedSeq(R,a,f)}),
+  eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}),
+  slash:aarit(@{[R,f,a]var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}),
 });
