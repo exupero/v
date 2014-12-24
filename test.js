@@ -299,6 +299,7 @@ process.stdout.write('\n');
   expect('*\':1 2 3 4 5',[2,6,12,20]);
   expect('+/1 2 3',6);
   expect('{x%2}/30',function(x){return x<1e-10});
+  expect('5(*[2;])/3',96);
   expect('5{x*2}/1',32);
   expect('{x<100}{x*2}/1',128);
   expect('{x+2*y}/1 2 3',11);

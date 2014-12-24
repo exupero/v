@@ -143,8 +143,9 @@ wraps=@{[ts]
   ^^ts}
 exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
+var arity=@{[f,a]f.arity=a;^^f};
 exports.run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,curry,apply,find,arity=@{[f,a]f.arity=a;^^f},forks=[],sched={suspend:@{forks.push(x)}};
+  var eval,evalss,evall,evals,evala,evalc,curry,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
@@ -171,9 +172,10 @@ exports.run=@{[src,R,ops]
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
-    a.type!='arglist'               ? f.call(sched,R,a)
-   :a.values.filter(udfq).length==0 ? f.apply(sched,[R].concat(a.values))
-   :R(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@{^^udfq(x)?b.shift():x})})})}
+    ^^(a.type!='arglist')f.call(sched,R,a);
+    var udfd=a.values.filter(udfq);
+    ^^(udfd.length==0)f.apply(sched,[R].concat(a.values));
+    R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@{^^udfq(x)?b.shift():x})})},udfd.length))}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
@@ -265,7 +267,7 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 teq=@{^^x==y||Math.abs(x-y)<1e-10}
 
-var arit=@{var ars=A,f=@{ars[A.length-2].apply(this,A)};f.arity=2;^^f},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
+var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 exports.defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
@@ -348,8 +350,9 @@ exports.defaultOps=({
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
       else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
     @{[R,f,a,b]
-      numq(a)?@{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}()
-     :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
-     :invals('f/',a,b)}),
+      if(f.arity==1){^^numq(a)?@{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}()
+                      :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
+                      :invals('f/',a,b)}
+      error('Invalid arity for `/` function: '+f.arity)}),
   bash:aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 });
