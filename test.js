@@ -41,10 +41,10 @@ process.stdout.write('\n');
     {type:'racket',value:']',part:void 0},
     {type:'lace',value:'{',part:void 0},
     {type:'race',value:'}',part:void 0}]);
-  expect("' '/ '\\ ': 'ello",[
+  expect("'/: \\: ': 'ello",[
     {type:'each',value:"'",part:'adverb'},
-    {type:'eachRight',value:"'/",part:'adverb'},
-    {type:'eachLeft',value:"'\\",part:'adverb'},
+    {type:'eachRight',value:"/:",part:'adverb'},
+    {type:'eachLeft',value:"\\:",part:'adverb'},
     {type:'eachPair',value:"':",part:'adverb'},
     {type:'each',value:"'",part:'adverb'},
     {type:'word',value:'ello',part:'noun'}]);
@@ -309,8 +309,8 @@ process.stdout.write('\n');
   expect('{x+2*y}/1 2 3',11);
   expect('+\\1 2 3 4',[1,3,6,10]);
   expect('{x+2*y}\\1 2 3 4',[1,5,11,19]);
-  expect('2#\'/("alpha";"bravo";"charlie")',['al','br','ch']);
-  expect('0 1 2 3#\'\\"alpha"',['','a','al','alp']);
+  expect('2#/:("alpha";"bravo";"charlie")',['al','br','ch']);
+  expect('0 1 2 3#\\:"alpha"',['','a','al','alp']);
 })();
 process.stdout.write('\n');
 process.exit(failures);

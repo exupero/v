@@ -22,7 +22,7 @@ tokens=@{[input,st]
   while(st!=N)st=st(t);^^ts}
 
 exports.lex=lex=@{[input]
-  var init,word,symbol,number,string,each,space;
+  var init,symbol,number,string,space;
   var syms=' `~!@#$%^&*,.<>/?=+\\|-_;:"\'()[]{}',digits='0123456789',stop=syms+digits+' \n\t';
   init=@{[t]
     var e=t.emit;
@@ -44,18 +44,18 @@ exports.lex=lex=@{[input]
         case '.':e('dot','verb');break;
         case '<':e('langle','verb');break;
         case '>':e('rangle','verb');break;
-        case '/':e('slash','adverb');break;
         case '?':e('query','verb');break;
         case '=':e('equals','verb');break;
         case '+':e('plus','verb');break;
-        case '\\':e('bash','adverb');break;
         case '|':e('pipe','verb');break;
         case '-':e('dash','verb');break;
         case '_':e('under','verb');break;
         case ';':e('semi');break;
         case ':':e('colon','verb');break;
         case '"':t.ignore();^^string;
-        case '\'':^^each;
+        case '/':t.nextChar()==':'?e('eachRight','adverb'):@{t.backup();e('slash','adverb')}();break;
+        case '\\':t.nextChar()==':'?e('eachLeft','adverb'):@{t.backup();e('bash','adverb')}();break;
+        case '\'':t.nextChar()==':'?e('eachPair','adverb'):@{t.backup();e('each','adverb')}();break;
         case '(':e('laren');break;
         case ')':e('raren');break;
         case '[':e('lacket');break;
@@ -68,21 +68,13 @@ exports.lex=lex=@{[input]
         case 'N':e('nil','noun');break;
         case 'Y':e('fork','verb');break;
         case '\n':e('semi');break;
-        default:t.backup();^^t.accept(digits)?number:word}}}
-  word=@{[t]t.until(stop);t.emit('word','noun');^^init}
+        default:t.backup();^^t.accept(digits)?number:@{[t]t.until(stop);t.emit('word','noun');^^init}}}}
   symbol=@{[t]t.until(stop);t.emit('symbol','noun');^^init}
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','noun')}else t.emit('int','noun');^^init}
   string=@{[t]
     t.until('"\\');
     if(t.peek()=='"'){t.emit('string','noun',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
     else{t.accept('\\');t.accept('"');^^string}}
-  each=@{[t]
-    switch(t.nextChar()){
-      case '/':t.emit('eachRight','adverb');break;
-      case '\\':t.emit('eachLeft','adverb');break;
-      case ':':t.emit('eachPair','adverb');break;
-      default:t.backup();t.emit('each','adverb');break}
-    ^^init}
   space=@{[t]
     if(t.accept('/')){t.until('\n');t.ignore();^^init}
     else{t.ignore();^^init}}
