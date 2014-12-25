@@ -82,6 +82,7 @@ expr=@{[ts]
   st=@{[a,b]
     ^^isNum(a)&&isNum(b)               ? 5
      :a.type=='vector'&&isNum(b)       ? 5
+     :a.type=='colon'                  ? 0
      :a.part=='noun'&&b.part=='noun'   ? 1
      :a.part=='verb'&&b.part=='verb'   ? 1
      :a.part=='verb'&&b.part=='noun'   ? 2
@@ -92,11 +93,12 @@ expr=@{[ts]
   bind=@{[a,b]ts.splice(i-1,2,
      isNum(a)&&isNum(b)               ? {type:'vector',part:'noun',values:[a,b]}
     :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
+    :a.type=='word'&&b.type=='colon'  ? {type:'assign',part:'noun',name:a.value}
     :a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
     :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
     :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,arg:a}
     :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
-    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'verb',f:a,g:b}
+    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'noun',f:a,g:b}
     :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,arg:a}
     :error('Invalid operation: '+a.value+' '+b.value))};
   while(ts.length>1){
@@ -132,11 +134,13 @@ exports.parse=parse=@{^^exprs(wraps(lex(x)))}
 
 var arity=@{[f,a]f.arity=a;^^f};
 exports.run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,curry,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
+  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
+     :tr.type=='assign'                       ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
      :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
-     :tr.type=='curry'                        ? curry(R,e,tr.func,tr.arg)
+     :tr.type=='compose'                      ? evall(@{[f,g]R(@{[R,a,b]g(@{f(R,x)},a,b)})},[tr.f,tr.g],e)
+     :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],e)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
      :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.type=='arglist'                      ? evall(@{R({type:'arglist',values:sl(A)})},tr.args,e)
@@ -157,7 +161,6 @@ exports.run=@{[src,R,ops]
   evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
   evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[f,x],e)}
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
-  curry=@{[R,e,f,x]f.type=='colon'?R(@{[R,y]eval(@{[y]e[e.length-1][x.value]=y;R(y)},y,e)}):evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[f,x],e)}
   apply=@{[R,f,a]
     ^^(a.type!='arglist')f.call(sched,R,a);
     var udfd=a.values.filter(udfq);

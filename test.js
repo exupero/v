@@ -70,7 +70,7 @@ process.stdout.write('\n');
   expect('1+',[{type:'curry',part:'verb',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("+1",[{type:'applyMonad',part:'noun',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
-  expect("+-",[{type:'compose',part:'verb',f:{type:'plus',value:'+',part:'verb'},g:{type:'dash',value:'-',part:'verb'}}]);
+  expect("+-",[{type:'compose',part:'noun',f:{type:'plus',value:'+',part:'verb'},g:{type:'dash',value:'-',part:'verb'}}]);
   expect("+/",[{type:'modVerb',part:'verb',mod:{type:'slash',value:'/',part:'adverb'},arg:{type:'plus',value:'+',part:'verb'}}]);
   expect("1+/",[
     {type:'curry',part:'verb',
@@ -194,6 +194,12 @@ process.stdout.write('\n');
     {type:'applyMonad',part:'noun',
      func:{type:'percent',value:'%',part:'verb'},
      arg:{type:'arglist',part:'noun',args:[void 0,{type:'int',value:'2',part:'noun'}]}}]);
+  expect('ne:~=',[
+    {type:'apply',part:'noun',
+     func:{type:'assign',part:'noun',name:'ne'},
+     arg:{type:'compose',part:'noun',
+          f:{type:'tilde',value:'~',part:'verb'},
+          g:{type:'equals',value:'=',part:'verb'}}}]);
 })();
 
 (function(){
@@ -311,6 +317,8 @@ process.stdout.write('\n');
   expect('{x+2*y}\\1 2 3 4',[1,5,11,19]);
   expect('2#/:("alpha";"bravo";"charlie")',['al','br','ch']);
   expect('0 1 2 3#\\:"alpha"',['','a','al','alp']);
+  expect('ne:~=;ne[1;2]',1);
+  expect('(~=)[1;1]',0);
 })();
 process.stdout.write('\n');
 process.exit(failures);
