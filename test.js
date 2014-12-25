@@ -5,9 +5,9 @@ process.stdout.write('\n');
 (function(){
   var expect=function(src,tokens){
     var ts=v.lex(src);
-    if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);return};
+    if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);failures=1;return};
     for(var i=0;i<tokens.length;i++){
-      var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+s(a)+' != '+s(e));return}};
+      var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+s(a)+' != '+s(e));failures=1;return}};
     success()}
   expect('a b',[{type:'word',value:'a',part:'noun'},{type:'word',value:'b',part:'noun'}]);
   expect('`sym',[{type:'symbol',value:'sym',part:'noun'}]);
@@ -41,7 +41,7 @@ process.stdout.write('\n');
     {type:'racket',value:']',part:void 0},
     {type:'lace',value:'{',part:void 0},
     {type:'race',value:'}',part:void 0}]);
-  expect("'/: \\: ': 'ello",[
+  expect("' /: \\: ': 'ello",[
     {type:'each',value:"'",part:'adverb'},
     {type:'eachRight',value:"/:",part:'adverb'},
     {type:'eachLeft',value:"\\:",part:'adverb'},
@@ -54,7 +54,7 @@ process.stdout.write('\n');
     {type:'dict',value:'D',part:'verb'},{type:'word',value:'i',part:'noun'},
     {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'}]);
   expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:'semi',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
-  expect("abc / this",[{type:'word',value:'abc',part:'noun'}]);
+  expect("abc NB. this",[{type:'word',value:'abc',part:'noun'}]);
 })();
 
 (function(){

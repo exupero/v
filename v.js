@@ -5,17 +5,14 @@ inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=@{[s,a,b]error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
 
 tokens=@{[input,st]
-  var t={},s=0,p=0,w=0,ts=[];
+  var s=0,p=0,w=0,ts=[],t={};
   t.nextChar=@{if(p>=input.length){w=0;^^eof}var c=input[p];w=1;p+=w;^^c}
   t.backup=@{p-=w}
   t.peek=@{var c=this.nextChar();this.backup();^^c}
   t.accept=@{[valid]if(valid.indexOf(this.nextChar())>=0)^^1;this.backup();^^0}
   t.acceptRun=@{[valid]while(valid.indexOf(this.nextChar())>=0){}this.backup()}
-  t.until=@{[stop]
-    while(1){
-      var c=this.nextChar();
-      if(c==eof)^^;
-      if(stop.indexOf(c)>=0){^^this.backup()}}}
+  t.acceptSeq=@{[s]for(var i=0;i<s.length;i++){if(t.nextChar()!=s[i]){while(i>=0){t.backup();i--};^^0}}^^1}
+  t.until=@{[stop]while(1){var c=this.nextChar();if(c==eof)^^;^^(stop.indexOf(c)>=0)this.backup()}}
   t.done=@{^^this.peek()==eof}
   t.ignore=@{s=p}
   t.emit=@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p}
@@ -75,9 +72,7 @@ exports.lex=lex=@{[input]
     t.until('"\\');
     if(t.peek()=='"'){t.emit('string','noun',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
     else{t.accept('\\');t.accept('"');^^string}}
-  space=@{[t]
-    if(t.accept('/')){t.until('\n');t.ignore();^^init}
-    else{t.ignore();^^init}}
+  space=@{[t]if(t.acceptSeq('NB. '))t.until('\n');t.ignore();^^init}
   ^^tokens(input,init)}
 
 isNum=@{^^x.type=='int'||x.type=='float'}
