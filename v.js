@@ -122,8 +122,8 @@ expr=@{[ts]
 exprs=@{[ts]
   var i,e=ts.length;
   for(i=e-1;i>=0;i--){
-    if(i==0)ts.splice(i,e-i,ts.slice(i,e));
-    if(ts[i].type=='semi'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}}
+    if(ts[i].type=='semi'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}
+    if(i==0)ts.splice(i,e-i,ts.slice(i,e))}
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
 wraps=@{[ts]

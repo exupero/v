@@ -60,7 +60,7 @@ process.stdout.write('\n');
 (function(){
   var expect=function(src,expected){
     try{var ast=v.parse(src)}catch(e){err('Error parsing `'+src+'`: '+e);return}
-    if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);return};
+    if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);failures=1;return};
     for(var i=0;i<ast.length;i++){
       var a=ast[i],e=expected[i];
       if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);failures=1;return}}
@@ -190,6 +190,10 @@ process.stdout.write('\n');
             arg:{type:'int',value:'5',part:'noun'}}]}]);
   expect('{y}',[{type:'func',part:'noun',args:['x','y'],body:[{type:'word',value:'y',part:'noun'}]}]);
   expect('{z}',[{type:'func',part:'noun',args:['x','y','z'],body:[{type:'word',value:'z',part:'noun'}]}]);
+  expect('%[;2]',[
+    {type:'applyMonad',part:'noun',
+     func:{type:'percent',value:'%',part:'verb'},
+     arg:{type:'arglist',part:'noun',args:[void 0,{type:'int',value:'2',part:'noun'}]}}]);
 })();
 
 (function(){
