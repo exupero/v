@@ -5,18 +5,18 @@ inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=@{[s,a,b]error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
 
 tokens=@{[input,st]
-  var s=0,p=0,w=0,ts=[],t={};
-  t.nextChar=@{if(p>=input.length){w=0;^^eof}var c=input[p];w=1;p+=w;^^c}
-  t.backup=@{p-=w}
-  t.peek=@{var c=this.nextChar();this.backup();^^c}
-  t.accept=@{[valid]if(valid.indexOf(this.nextChar())>=0)^^1;this.backup();^^0}
-  t.acceptRun=@{[valid]while(valid.indexOf(this.nextChar())>=0){}this.backup()}
-  t.acceptSeq=@{[s]for(var i=0;i<s.length;i++){if(t.nextChar()!=s[i]){while(i>=0){t.backup();i--};^^0}}^^1}
-  t.until=@{[stop]while(1){var c=this.nextChar();if(c==eof)^^;^^(stop.indexOf(c)>=0)this.backup()}}
-  t.done=@{^^this.peek()==eof}
-  t.ignore=@{s=p}
-  t.emit=@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p}
-  while(st!=N)st=st(t);^^ts}
+  var s=0,p=0,w=0,ts=[],t={
+    nextChar:@{if(p>=input.length){w=0;^^eof}var c=input[p];w=1;p+=w;^^c},
+    backup:@{p-=w},
+    peek:@{var c=this.nextChar();this.backup();^^c},
+    accept:@{[valid]if(valid.indexOf(this.nextChar())>=0)^^1;this.backup();^^0},
+    acceptRun:@{[valid]while(valid.indexOf(this.nextChar())>=0){}this.backup()},
+    acceptSeq:@{[s]for(var i=0;i<s.length;i++){if(t.nextChar()!=s[i]){while(i>=0){t.backup();i--};^^0}}^^1},
+    until:@{[stop]while(1){var c=this.nextChar();if(c==eof)^^;^^(stop.indexOf(c)>=0)this.backup()}},
+    done:@{^^this.peek()==eof},
+    ignore:@{s=p},
+    emit:@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p},
+  };while(st!=N)st=st(t);^^ts}
 
 exports.lex=lex=@{[input]
   var init,symbol,number,string,space;
