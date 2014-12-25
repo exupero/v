@@ -343,7 +343,9 @@ exports.defaultOps=({
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   each:aarit(@{[R,f,a]mappedSeq(R,a,f)}),
   eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,x,@{[R,x]f(R,x[0],x[1])})},a)}),
-  eachRight:aarit(N,@{[R,f,a,b]mappedSeq(R,b,@{[R,x]f(R,a,x)})}),
+  eachRight:aarit(
+    @{[R,f,a]mappedSeq(R,a,f)},
+    @{[R,f,a,b]mappedSeq(R,b,@{[R,x]f(R,a,x)})}),
   eachLeft:aarit(N,@{[R,f,a,b]mappedSeq(R,a,@{[R,x]f(R,x,b)})}),
   slash:aarit(
     @{[R,f,a]
