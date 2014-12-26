@@ -170,7 +170,7 @@ exports.run=@{[src,R,ops]
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,map,take,drop,concat,reverse,pair,lazySeq,mappedSeq,cons,channel,teq;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq;
 ich=@{var ms=sl(A);^^@{[x]^^ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -194,7 +194,7 @@ arrTseq=@{
   s.empty=@{^^s([])}
   ^^s}()
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
-mappedSeq=@{[R,f,s]cons(R,@{[R]s.first(@{f(R,x)})},@{[R]s.next(@{x?mappedSeq(R,f,x):R(N)})})}
+map=@{[R,f,s]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@{^^x!=N})?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
@@ -217,7 +217,6 @@ nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)}
 counts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?count(C,xs[i++]):R(out)};count(C,xs[i++])}
 
 reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@{[y]^^y!=null}).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
-map=@{[R,f]reduce.apply(N,[R,@{[R,m]m.append(R,f.apply(N,sl(A,2)))},A[2].empty()].concat(sl(A,2)))}
 vdoq=@{[a,b]
   ^^(numq(a)||mapq(a)||seqq(a))&&udfq(b)||
     (numq(a)||mapq(a)||seqq(a))&&numq(b)||
@@ -226,11 +225,11 @@ vdoq=@{[a,b]
 vdo=@{[R,f,a,b]
   numq(a)&&udfq(b)?R(f(a))
  :numq(a)&&numq(b)?R(f(a,b))
- :numq(a)&&seqq(b)?map(R,@{^^f(a,x)},b)
+ :numq(a)&&seqq(b)?map(R,@{[R,x]R(f(a,x))},b)
  :numq(a)&&mapq(b)?b.remap(R,@{[R,x]R(f(a,x))})
- :seqq(a)&&udfq(b)?map(R,f,a)
- :seqq(a)&&numq(b)?R(map(@{^^f(x,b)},a))
- :seqq(a)&&seqq(b)?map(R,f,a,b)
+ :seqq(a)&&udfq(b)?map(R,@{[R,x]R(f(x))},a)
+ :seqq(a)&&numq(b)?map(R,@{[R,x]R(f(x,b))},a)
+ :seqq(a)&&seqq(b)?map(R,@{[R,x,y]R(f(x,y))},a,b)
  :mapq(a)&&udfq(b)?a.remap(R,@{[R,x]R(f(x))})
  :mapq(a)&&numq(b)?a.remap(R,@{[R,x]R(f(x,b))})
  :mapq(a)&&mapq(b)?a.remap(R,@{[R,x,y]R(f(x,y))},b)
@@ -331,12 +330,12 @@ exports.defaultOps=({
      :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
-  each:aarit(mappedSeq),
-  eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{mappedSeq(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
+  each:aarit(map),
+  eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
   eachRight:aarit(
-    mappedSeq,
-    @{[R,f,a,b]mappedSeq(R,@{[R,x]f(R,a,x)},b)}),
-  eachLeft:aarit(N,@{[R,f,a,b]mappedSeq(R,@{[R,x]f(R,x,b)},a)}),
+    map,
+    @{[R,f,a,b]map(R,@{[R,x]f(R,a,x)},b)}),
+  eachLeft:aarit(N,@{[R,f,a,b]map(R,@{[R,x]f(R,x,b)},a)}),
   slash:aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
