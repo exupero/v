@@ -326,6 +326,7 @@ process.stdout.write('\n');
   expect('c:C;d:~c;Y{c!0};*d',1);
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
+  expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
 })();
 process.stdout.write('\n');
 process.exit(failures);

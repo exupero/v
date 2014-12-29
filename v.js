@@ -170,7 +170,7 @@ exports.run=@{[src,R,ops]
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapChan;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -183,7 +183,7 @@ chaq=ich('put','take','hasValue');
 colq=@{^^seqq(x)||mapq(x)||chaq(x)}
 
 channel=@{var c={put:@{c.values.push(x)},take:@{[R]R(c.values.shift())},hasValue:@{^^c.values.length>0},values:[]};^^c}
-mapChan=@{[f,c]^^{put:@{error('Cannot put on mapped channel')},take:@{[R]c.take(@{f(R,x)})},hasValue:c.hasValue}}
+mapC=@{[f]var cs=sl(A,1);^^{put:@{error('Cannot put on mapped channel')},take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},hasValue:@{^^cs.every(@{^^x.hasValue()})}}}
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[N,R,a]a.call(N,R,s)}};^^s}
 arrTseq=@{
@@ -217,6 +217,7 @@ seqTdic=@{[R,ps,f]
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
 counts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?count(C,xs[i++]):R(out)};count(C,xs[i++])}
+takesC=@{[R,cs]var i=0,out=[],C=@{out.push(x);i<cs.length?cs[i++].take(C):R(out)};cs[i++].take(C)}
 atomic=@{[f]^^@{[R,x,y]colq(x)||colq(y)?vdo(R,f,x,y):R(f(x,y))}}
 
 reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@{[y]^^y!=null}).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
@@ -224,22 +225,23 @@ vdoq=@{[a,b]
   ^^(numq(a)||mapq(a)||seqq(a)||chaq(a))&&udfq(b)||
     (numq(a)||mapq(a)||seqq(a)||chaq(a))&&numq(b)||
     (numq(a)||mapq(a))&&mapq(b)||
-    numq(a)&&chaq(b)||
+    (numq(a)||chaq(a))&&chaq(b)||
     (numq(a)||seqq(b))&&seqq(b)}
 vdo=@{[R,f,a,b]
   numq(a)&&udfq(b)?R(f(a))
  :numq(a)&&numq(b)?R(f(a,b))
  :numq(a)&&seqq(b)?map(R,atomic(@{^^f(a,x)}),b)
  :numq(a)&&mapq(b)?b.remap(R,atomic(@{^^f(a,x)}))
- :numq(a)&&chaq(b)?R(mapChan(@{[R,x]R(f(a,x))},b))
+ :numq(a)&&chaq(b)?R(mapC(@{[R,x]R(f(a,x))},b))
  :seqq(a)&&udfq(b)?map(R,atomic(@{^^f(x)}),a)
  :seqq(a)&&numq(b)?map(R,atomic(@{^^f(x,b)}),a)
  :seqq(a)&&seqq(b)?map(R,atomic(f),a,b)
  :mapq(a)&&udfq(b)?a.remap(R,atomic(@{^^f(x)}))
  :mapq(a)&&numq(b)?a.remap(R,atomic(@{^^f(x,b)}))
  :mapq(a)&&mapq(b)?a.remap(R,atomic(f),b)
- :chaq(a)&&udfq(b)?R(mapChan(@{[R,x]R(f(x))},a))
- :chaq(a)&&numq(b)?R(mapChan(@{[R,x]R(f(x,b))},a))
+ :chaq(a)&&udfq(b)?R(mapC(@{[R,x]R(f(x))},a))
+ :chaq(a)&&numq(b)?R(mapC(@{[R,x]R(f(x,b))},a))
+ :chaq(a)&&chaq(b)?R(mapC(@{[R,x,y]R(f(x,y))},a,b))
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
 concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
