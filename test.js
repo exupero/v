@@ -1,10 +1,10 @@
 Error.stackTraceLimit = 30
-var v=require(process.argv[2]),util=require('util'),failures=0,spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
+var util=require('util'),failures=0,spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
 
 process.stdout.write('\n');
 (function(){
   var expect=function(src,tokens){
-    var ts=v.lex(src);
+    var ts=lex(src);
     if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);failures=1;return};
     for(var i=0;i<tokens.length;i++){
       var a=ts[i],e=tokens[i];if(a.type!=e.type||a.value!=e.value||a.part!=e.part){err('Token '+(i+1)+' differs: '+s(a)+' != '+s(e));failures=1;return}};
@@ -59,13 +59,13 @@ process.stdout.write('\n');
 
 (function(){
   var expect=function(src,expected){
-    try{var ast=v.parse(src)}catch(e){err('Error parsing `'+src+'`: '+e);return}
+    try{var ast=parse(src)}catch(e){err('Error parsing `'+src+'`: '+e);return}
     if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);failures=1;return};
     for(var i=0;i<ast.length;i++){
       var a=ast[i],e=expected[i];
       if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);failures=1;return}}
     success()}
-  var expectFailure=function(src){try{v.parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
+  var expectFailure=function(src){try{parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
   expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
   expect('1+',[{type:'curry',part:'verb',func:{type:'plus',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("1'",[{type:'modNoun',part:'verb',mod:{type:'each',value:"'",part:'adverb'},arg:{type:'int',value:'1',part:'noun'}}]);
@@ -207,10 +207,10 @@ process.stdout.write('\n');
     if(v&&v.first&&v.next){var a=[],next=function(xs){if(!xs){R(a);return}xs.first(function(x){ar(function(xr){a.push(xr);xs.next(next)},x)})};next(v)}
     else R(v)},
       expect=function(src,x){
-    var c=0,go=function(){v.run(src,function(r){c=1;ar(function(r){
+    var c=0,go=function(){run(src,function(r){c=1;ar(function(r){
       if(x&&x.call){if(!x(r)){err('`'+src+'` == '+r+' and does not pass check');failures=1;return}}
       else if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}
-      success()},r)},v.defaultOps)}
+      success()},r)},defaultOps)}
     try{go()}catch(e){err(e)}
     if(!c){err('`'+src+'` does not return a result');failures=1}}
   expect('{x*2}2',4);

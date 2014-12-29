@@ -18,7 +18,7 @@ tokens=@{[input,st]
     emit:@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p},
   };while(st!=N)st=st(t);^^ts}
 
-exports.lex=lex=@{[input]
+lex=@{[input]
   var init,symbol,number,string,space;
   var syms=' `~!@#$%^&*,.<>/?=+\\|-_;:"\'()[]{}',digits='0123456789',stop=syms+digits+' \n\t';
   init=@{[t]
@@ -130,10 +130,10 @@ wraps=@{[ts]
         else args=[]}
       ^^{type:'func',part:'noun',args:args,body:exprs(tss)}})}
   ^^ts}
-exports.parse=parse=@{^^exprs(wraps(lex(x)))}
+parse=@{^^exprs(wraps(lex(x)))}
 
 var arity=@{[f,a]f.arity=a;^^f};
-exports.run=@{[src,R,ops]
+run=@{[src,R,ops]
   var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
@@ -266,7 +266,7 @@ cons=@{[R,x,xs,ys]var s={
 teq=@{^^x==y||Math.abs(x-y)<1e-10}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
-exports.defaultOps=({
+defaultOps=({
   tilde:arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
     @{[R,a,b]
