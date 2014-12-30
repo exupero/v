@@ -28,43 +28,43 @@ lex=@{[input]
       switch(t.nextChar()){
         case ' ':^^space;
         case '`':t.ignore();^^symbol;
-        case '~':e('tilde','verb');break;
-        case '!':e('bang','verb');break;
-        case '@':e('at','verb');break;
-        case '#':e('hash','verb');break;
-        case '$':e('dollar','verb');break;
-        case '%':e('percent','verb');break;
-        case '^':e('caret','verb');break;
-        case '&':e('amp','verb');break;
-        case '*':e('star','verb');break;
-        case ',':e('comma','verb');break;
-        case '.':e('dot','verb');break;
-        case '<':e('langle','verb');break;
-        case '>':e('rangle','verb');break;
-        case '?':e('query','verb');break;
-        case '=':e('equals','verb');break;
-        case '+':e('plus','verb');break;
-        case '|':e('pipe','verb');break;
-        case '-':e('dash','verb');break;
-        case '_':e('under','verb');break;
-        case ';':e('semi');break;
-        case ':':e('colon','verb');break;
+        case '~':e('~','verb');break;
+        case '!':e('!','verb');break;
+        case '@':e('@','verb');break;
+        case '#':e('#','verb');break;
+        case '$':e('$','verb');break;
+        case '%':e('%','verb');break;
+        case '^':e('^','verb');break;
+        case '&':e('&','verb');break;
+        case '*':e('*','verb');break;
+        case ',':e(',','verb');break;
+        case '.':e('.','verb');break;
+        case '<':e('<','verb');break;
+        case '>':e('>','verb');break;
+        case '?':e('?','verb');break;
+        case '=':e('=','verb');break;
+        case '+':e('+','verb');break;
+        case '|':e('|','verb');break;
+        case '-':e('-','verb');break;
+        case '_':e('_','verb');break;
+        case ';':e(';');break;
+        case ':':e(':','verb');break;
         case '"':t.ignore();^^string;
-        case '/':t.nextChar()==':'?e('eachRight','adverb'):@{t.backup();e('slash','adverb')}();break;
-        case '\\':t.nextChar()==':'?e('eachLeft','adverb'):@{t.backup();e('bash','adverb')}();break;
-        case '\'':t.nextChar()==':'?e('eachPair','adverb'):@{t.backup();e('each','adverb')}();break;
-        case '(':e('laren');break;
-        case ')':e('raren');break;
-        case '[':e('lacket');break;
-        case ']':e('racket');break;
-        case '{':e('lace');break;
-        case '}':e('race');break;
+        case '/':t.nextChar()==':'?e('/:','adverb'):@{t.backup();e('/','adverb')}();break;
+        case '\\':t.nextChar()==':'?e('\\:','adverb'):@{t.backup();e('\\','adverb')}();break;
+        case '\'':t.nextChar()==':'?e("':",'adverb'):@{t.backup();e("'",'adverb')}();break;
+        case '(':e('(');break;
+        case ')':e(')');break;
+        case '[':e('[');break;
+        case ']':e(']');break;
+        case '{':e('{');break;
+        case '}':e('}');break;
         case 'C':e('channel','noun');break;
         case 'D':e('dict','verb');break;
         case 'L':e('lazy','verb');break;
         case 'N':e('nil','noun');break;
         case 'Y':e('fork','verb');break;
-        case '\n':e('semi');break;
+        case '\n':e(';');break;
         default:t.backup();^^t.accept(digits)?number:@{[t]t.until(stop);t.emit('word','noun');^^init}}}}
   symbol=@{[t]t.until(stop);t.emit('symbol','noun');^^init}
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','noun')}else t.emit('int','noun');^^init}
@@ -82,7 +82,7 @@ expr=@{[ts]
   st=@{[a,b]
     ^^isNum(a)&&isNum(b)               ? 5
      :a.type=='vector'&&isNum(b)       ? 5
-     :a.type=='colon'                  ? 0
+     :a.type==':'                      ? 0
      :a.part=='noun'&&b.part=='noun'   ? 1
      :a.part=='verb'&&b.part=='verb'   ? 1
      :a.part=='verb'&&b.part=='noun'   ? 2
@@ -93,7 +93,7 @@ expr=@{[ts]
   bind=@{[a,b]ts.splice(i-1,2,
      isNum(a)&&isNum(b)               ? {type:'vector',part:'noun',values:[a,b]}
     :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
-    :a.type=='word'&&b.type=='colon'  ? {type:'assign',part:'noun',name:a.value}
+    :a.type=='word'&&b.type==':'      ? {type:'assign',part:'noun',name:a.value}
     :a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
     :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
     :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,arg:a}
@@ -111,7 +111,7 @@ expr=@{[ts]
 exprs=@{[ts]
   var i,e=ts.length;
   for(i=e-1;i>=0;i--){
-    if(ts[i].type=='semi'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}
+    if(ts[i].type==';'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}
     if(i==0)ts.splice(i,e-i,ts.slice(i,e))}
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
@@ -119,9 +119,9 @@ wraps=@{[ts]
   var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].type==ty){ts.splice(i,j-i+1,f(ts.slice(i+1,j)));^^}unmatched(t.type)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
-    if(t.type=='laren')find('raren',@{var x=exprs(x);^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
-    else if(t.type=='lacket')find('racket',@{^^{type:'arglist',part:'noun',args:exprs(x)}});
-    else if(t.type=='lace')find('race',@{[tss]var args;
+    if(t.type=='(')find(')',@{var x=exprs(x);^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
+    else if(t.type=='[')find(']',@{^^{type:'arglist',part:'noun',args:exprs(x)}});
+    else if(t.type=='{')find('}',@{[tss]var args;
       if(tss[0].type=='arglist')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
       else{var a=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
         if(a.indexOf('z')!=-1)args=['x','y','z'];
@@ -134,11 +134,11 @@ parse=@{^^exprs(wraps(lex(x)))}
 
 var arity=@{[f,a]f.arity=a;^^f};
 run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],sched={suspend:@{forks.push(x)}};
+  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],sched={suspend:@{forks.push(x)}};if(!ops)ops=defaultOps;
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='assign'                       ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
-     :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type=='colon'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
+     :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type==':'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
      :tr.type=='compose'                      ? evall(@{[f,g]R(@{[R,a,b]g(@{f(R,x)},a,b)})},[tr.f,tr.g],e)
      :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],e)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
@@ -267,62 +267,62 @@ teq=@{^^x==y||Math.abs(x-y)<1e-10}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 defaultOps=({
-  tilde:arit(
+  '~':arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(bl(a==b))
      :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)},[a,b])
      :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
      :invals('~',a,b)}),
-  plus:arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
-  dash:arit(
+  '+':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
+  '-':arit(
     @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
-  star:arit(
+  '*':arit(
     @{[R,a]var sched=this;
       seqq(a)?a.first(R)
      :chaq(a)?@{var C=@{a.hasValue()?a.take(R):sched.suspend(C)};C()}()
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
-  percent:arit(
+  '%':arit(
     @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
-  bang:arit(
+  '!':arit(
     @{[R,a]numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}():inval('!',a)},
     @{[R,a,b]
       numq(a)&&numq(b) ? R(a%b)
      :chaq(a)          ? @{a.put(b);R(a)}()
      :invals('!',a,b)}),
-  at:arit(
+  '@':arit(
     @{[R,a]R(bl(numq(a)||symq(a)))},
     @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
-  hash:arit(
+  '#':arit(
     @{[R,a]seqq(a)?count(R,a):inval('#',a)},
     @{[R,a,b]
       numq(a)&&seqq(b)?take(R,a,b)
      :numq(a)&&strq(b)?R(b.slice(0,a))
      :invals('#',a,b)}),
-  under:arit(
+  '_':arit(
     @{[R,a]vecq(a)?vdo(R,@{^^Math.floor(x)},a):inval('_',a)},
     @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
-  caret:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^Math.pow(x,y)},a,b):invals('^',a,b)}),
-  langle:arit(
+  '^':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^Math.pow(x,y)},a,b):invals('^',a,b)}),
+  '<':arit(
     @{[R,a]mapq(a)?a.keys(R):inval('<',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x<y)},a,b):invals('<',a,b)}),
-  rangle:arit(
+  '>':arit(
     @{[R,a]mapq(a)?a.values(R):inval('>',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x>y)},a,b):invals('>',a,b)}),
-  amp:arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?y:x},a,b):invals('&',a,b)}),
-  pipe:arit(
+  '&':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?y:x},a,b):invals('&',a,b)}),
+  '|':arit(
     @{[R,a]seqq(a)?reverse(R,a):inval('|',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?x:y},a,b):invals('|',a,b)}),
-  equals:arit(N,
+  '=':arit(N,
     @{[R,a,b]
       vecq(a)&&vecq(b)               ? vdo(R,@{^^bl(x==y)},a,b)
      :to('string',a)&&to('string',b) ? R(bl(a==b))
      :symq(a)&&symq(b)               ? R(bl(a.value==b.value))
      :R(0)}),
-  comma:arit(
+  ',':arit(
     @{[R,a]numq(a)?R(arrTseq([a])):inval(',',a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(arrTseq([a,b]))
@@ -332,20 +332,20 @@ defaultOps=({
      :seqq(a)&&mapq(b)?b.assoc(R,a)
      :mapq(a)&&seqq(b)?a.assoc(R,b)
      :invals(',',a,b)}),
-  dollar:arit(
+  '$':arit(
     @{[R,a]
       numq(a)?R(''+a)
      :seqq(a)?seqTarr(R,a)
      :inval('$',a)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
-  each:aarit(map),
-  eachPair:aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
-  eachRight:aarit(
+  "'":aarit(map),
+  "':":aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
+  '/:':aarit(
     map,
     @{[R,f,a,b]map(R,@{[R,x]f(R,a,x)},b)}),
-  eachLeft:aarit(N,@{[R,f,a,b]map(R,@{[R,x]f(R,x,b)},a)}),
-  slash:aarit(
+  '\\:':aarit(N,@{[R,f,a,b]map(R,@{[R,x]f(R,x,b)},a)}),
+  '/':aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
       else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
@@ -354,5 +354,5 @@ defaultOps=({
                       :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
                       :invals('f/',a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
-  bash:aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
+  '\\':aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 });
