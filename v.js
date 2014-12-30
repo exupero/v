@@ -22,43 +22,19 @@ lex=@{[input]
   var init,symbol,number,string,space;
   var syms=' `~!@#$%^&*,.<>/?=+\\|-_;:"\'()[]{}',digits='0123456789',stop=syms+digits+' \n\t';
   init=@{[t]
-    var e=t.emit;
+    var e=t.emit,c;
     while(1){
       if(t.done())^^;
-      switch(t.nextChar()){
+      c=t.nextChar();
+      if('~!@#$%^&*,.<>?=+|-_:'.indexOf(c)>=0){e(c,'verb');continue}
+      if(';()[]{}'.indexOf(c)>=0){e(c);continue}
+      switch(c){
         case ' ':^^space;
         case '`':t.ignore();^^symbol;
-        case '~':e('~','verb');break;
-        case '!':e('!','verb');break;
-        case '@':e('@','verb');break;
-        case '#':e('#','verb');break;
-        case '$':e('$','verb');break;
-        case '%':e('%','verb');break;
-        case '^':e('^','verb');break;
-        case '&':e('&','verb');break;
-        case '*':e('*','verb');break;
-        case ',':e(',','verb');break;
-        case '.':e('.','verb');break;
-        case '<':e('<','verb');break;
-        case '>':e('>','verb');break;
-        case '?':e('?','verb');break;
-        case '=':e('=','verb');break;
-        case '+':e('+','verb');break;
-        case '|':e('|','verb');break;
-        case '-':e('-','verb');break;
-        case '_':e('_','verb');break;
-        case ';':e(';');break;
-        case ':':e(':','verb');break;
         case '"':t.ignore();^^string;
         case '/':t.nextChar()==':'?e('/:','adverb'):@{t.backup();e('/','adverb')}();break;
         case '\\':t.nextChar()==':'?e('\\:','adverb'):@{t.backup();e('\\','adverb')}();break;
         case '\'':t.nextChar()==':'?e("':",'adverb'):@{t.backup();e("'",'adverb')}();break;
-        case '(':e('(');break;
-        case ')':e(')');break;
-        case '[':e('[');break;
-        case ']':e(']');break;
-        case '{':e('{');break;
-        case '}':e('}');break;
         case 'C':e('channel','noun');break;
         case 'D':e('dict','verb');break;
         case 'L':e('lazy','verb');break;
