@@ -1,4 +1,4 @@
-var tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
+var H=require('virtual-dom/h'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
 pt=@{[f]var xs=sl(A,1);^^@{^^f.apply(N,xs.concat(sl(A)))}}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -146,7 +146,7 @@ run=@{[src,R,ops]
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -157,13 +157,19 @@ mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
 chaq=ich('put','take','hasValue');
 colq=@{^^seqq(x)||mapq(x)||chaq(x)}
+domq=@{^^x.tagName&&x.properties&&x.children}
 
 channel=@{var c={put:@{c.values.push(x)},take:@{[R]R(c.values.shift())},hasValue:@{^^c.values.length>0},values:[]};^^c}
 mapC=@{[f]var cs=sl(A,1);^^{put:@{error('Cannot put on mapped channel')},take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},hasValue:@{^^cs.every(@{^^x.hasValue()})}}}
 strTsym=@{var s={type:'symbol',value:x,
-  call:@{[N,R,a]a.call(N,R,s)}};^^s}
+  call:@{[_,R,a]
+    mapq(a)?a.call(N,R,s)
+   :domq(a)?R(H(s.value,{},[a]))
+   :seqq(a)?seqTarr(@{R(H(s.value,{},x))},a)
+   :inval(json(s),a)}};^^s}
 arrTseq=@{
   var s=@{[xs]^^{
+    type:'seq',
     empty:s.empty,
     first:@{[R]R(xs[0])},
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
@@ -189,6 +195,7 @@ seqTdic=@{[R,ps,f]
          keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
          values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   R(d)}
+func=@{[x]^^funq(x)?x:@{[R]R(x)}}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
@@ -234,15 +241,18 @@ drop=@{[R,n,xs]
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 cons=@{[R,x,xs,ys]var s={
+  type:'seq',
   empty:arrTseq.empty,
   first:@{[R]x(R)},
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 teq=@{^^x==y||Math.abs(x-y)<1e-10}
+config=@{[R,h,xs]switch(xs[0].value){
+  case 'text':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data)}}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
-defaultOps=({
+defaultOps={
   '~':arit(
     @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
     @{[R,a,b]
@@ -312,7 +322,11 @@ defaultOps=({
     @{[R,a]
       numq(a)?R(''+a)
      :seqq(a)?seqTarr(R,a)
-     :inval('$',a)}),
+     :inval('$',a)},
+    @{[R,a,b]
+      symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.value,{},[]);h._data=x;R(h)},b)
+     :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
+     :invals('$',a,b)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
@@ -331,4 +345,4 @@ defaultOps=({
                       :invals('f/',a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
   '\\':aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
-});
+}

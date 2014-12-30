@@ -208,7 +208,7 @@ process.stdout.write('\n');
     else R(v)},
       expect=function(src,x){
     var c=0,go=function(){run(src,function(r){c=1;ar(function(r){
-      if(x&&x.call){if(!x(r)){err('`'+src+'` == '+r+' and does not pass check');failures=1;return}}
+      if(x&&x.call){if(!x(r)){err('`'+src+'` == '+spect(r)+' and does not pass check');failures=1;return}}
       else if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}
       success()},r)})}
     try{go()}catch(e){err(e)}
@@ -308,7 +308,7 @@ process.stdout.write('\n');
   expect('~\'0 2 0 4',[1,0,1,0]);
   expect('*\':1 2 3 4 5',[2,6,12,20]);
   expect('+/1 2 3',6);
-  expect('{x%2}/30',function(x){return x<1e-10});
+  expect('{x%2}/30',@{^^x<1e-10});
   expect('5(*[2;])/3',96);
   expect('5{x*2}/1',32);
   expect('{x<100}{x*2}/1',128);
@@ -327,6 +327,25 @@ process.stdout.write('\n');
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
+  expect('(`text;{x*2})$`li$1 2 3',@{
+    ^^(x.length!=3)0;
+    ^^(x[0].tagName!='li')0;
+    ^^(x[0].children.length!=1)0;
+    ^^(x[0].children[0].text!='2')0;
+    ^^(x[1].tagName!='li')0;
+    ^^(x[1].children.length!=1)0;
+    ^^(x[1].children[0].text!='4')0;
+    ^^(x[2].tagName!='li')0;
+    ^^(x[2].children.length!=1)0;
+    ^^(x[2].children[0].text!='6')0;
+    ^^1});
+  expect('`ul(`li$1 2 3)',@{
+    ^^(x.tagName!='ul')0;
+    ^^(x.children.length!=3)0;
+    ^^(x.children[0].tagName!='li')0;
+    ^^(x.children[1].tagName!='li')0;
+    ^^(x.children[2].tagName!='li')0;
+    ^^1});
 })();
 process.stdout.write('\n');
 process.exit(failures);
