@@ -109,8 +109,8 @@ parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],m;if(!ops)ops=defaultOps;
-  m={suspend:@{forks.push(x)},root:this}
+  var eval,evalss,evall,evals,evala,evalc,apply,find,fs=[],sus=@fs.push(x),m;if(!ops)ops=defaultOps;
+  m={root:this};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='assign'                       ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
@@ -121,8 +121,8 @@ run=@{[src,R,ops]
      :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.type=='arglist'                      ? evall(@{R({type:'arglist',values:sl(A)})},tr.args,e)
      :tr.type=='vector'                       ? evals(R,tr.values,e)
-     :tr.type=='channel'                      ? R(channel())
-     :tr.type=='fork'                         ? R(@{[R,f]forks.push(@{f(@{})});R(N)})
+     :tr.type=='channel'                      ? R(channel(sus))
+     :tr.type=='fork'                         ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
      :tr.type=='list'                         ? evals(R,tr.values,e)
      :tr.type=='word'                         ? eval(R,find(tr.value,e),N)
      :symq(tr)                                ? R(strTsym(tr.value))
@@ -144,7 +144,7 @@ run=@{[src,R,ops]
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src),[{}]);
-  while(forks.length>0)forks.shift()()}
+  while(fs.length>0)fs.shift()()}
 
 var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config,show;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
@@ -155,23 +155,27 @@ funq=ich('call');
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@numq(x)||seqq(x);
-chaq=ich('put','take','close','hasValue','isOpen');
+chaq=ich('put','take','close','isOpen');
 colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x.tagName&&x.properties&&x.children;
 
-channel=@{var c={
-  put:@{c.values.push(x)},
+channel=@{[s]var c={
+  put:@{[R,x]
+    !c.open?error('Cannot put to a closed channel')
+   :c.values.length>0?s(@c.put(R,x))
+   :@!{c.values.push(x);R(c)}},
   close:@{c.open=0},
-  take:@{[R]R(c.values.shift())},
-  hasValue:@c.values.length>0,
+  take:@{[R]
+    !c.open?error('Cannot take from a closed channel')
+   :c.values.length>0?R(c.values.shift())
+   :s(@c.take(R))},
   isOpen:@c.open,
   open:1,values:[]};^^c}
 mapC=@{[f]var cs=sl(A,1);^^{
   put:@{error('Cannot put on mapped channel')},
   close:@{error('Cannot close a mapped channel')},
   take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},
-  isOpen:@cs.every(@x.isOpen()),
-  hasValue:@cs.every(@x.hasValue())}}
+  isOpen:@cs.every(@x.isOpen())}}
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[_,R,a]
     mapq(a)?a.call(N,R,s)
@@ -278,9 +282,9 @@ defaultOps={
     @{[R,a]vecq(a)?vdo(R,@-x,a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x-y,a,b):invals('-',a,b)}),
   '*':arit(
-    @{[R,a]var m=this;
+    @{[R,a]
       seqq(a)?a.first(R)
-     :chaq(a)?@!{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):m.suspend(C)};C()}
+     :chaq(a)?a.take(R)
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x*y,a,b):invals('*',a,b)}),
   '%':arit(
@@ -291,9 +295,9 @@ defaultOps={
       numq(a)?@!{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}
      :chaq(a)?@!{a.close();R(N)}
      :inval('!',a)},
-    @{[R,a,b]var m=this;
-      numq(a)&&numq(b) ? R(a%b)
-     :chaq(a)          ? @!{var C=@{!a.isOpen()?error('Cannot put to a closed channel'):a.hasValue()?m.suspend(C):@!{a.put(b);R(a)}};C()}
+    @{[R,a,b]
+      numq(a)&&numq(b)?R(a%b)
+     :chaq(a)?a.put(R,b)
      :invals('!',a,b)}),
   '@':arit(
     @{[R,a]R(bl(numq(a)||symq(a)))},
