@@ -1,9 +1,9 @@
 Error.stackTraceLimit = 30
-var util=require('util'),failures=0,spect=function(v){return util.inspect(v,{depth:null})},l=console.log,err=function(){process.stderr.write('\n');console.error.apply(null,arguments)},s=JSON.stringify,diff=function(ex,ac){err('expected',spect(ex));err('actually',spect(ac))},success=function(){process.stdout.write('.')},spy=function(x){l(x);return x};
+var util=require('util'),failures=0,spect=@{^^util.inspect(x,{depth:N})},l=console.log,err=@{process.stderr.write('\n');console.error.apply(N,A)},s=JSON.stringify,diff=@{err('expected',spect(x));err('actually',spect(y))},success=@{process.stdout.write('.')},spy=@{l(x);^^x};
 
 process.stdout.write('\n');
-(function(){
-  var expect=function(src,tokens){
+@!{
+  var expect=@{[src,tokens]
     var ts=lex(src);
     if(ts.length!=tokens.length){err('lexing "'+src+'" produces '+ts.length+' tokens instead of '+tokens.length);diff(tokens,ts);failures=1;return};
     for(var i=0;i<tokens.length;i++){
@@ -55,17 +55,17 @@ process.stdout.write('\n');
     {type:'nil',value:'N',part:'noun'},{type:'word',value:'i',part:'noun'}]);
   expect("abc\ndef",[{type:'word',value:'abc',part:'noun'},{type:';',value:'\n',part:void 0},{type:'word',value:'def',part:'noun'}]);
   expect("abc NB. this",[{type:'word',value:'abc',part:'noun'}]);
-})();
+};
 
-(function(){
-  var expect=function(src,expected){
+@!{
+  var expect=@{[src,expected]
     try{var ast=parse(src)}catch(e){err('Error parsing `'+src+'`: '+e);return}
     if(ast.length!=expected.length){err('parsing "'+src+'" produces '+ast.length+' statements instead of '+expected.length);diff(expected,ast);failures=1;return};
     for(var i=0;i<ast.length;i++){
       var a=ast[i],e=expected[i];
       if(s(a)!=s(e)){err('unexpected result when parsing "'+src+'"');diff(e,a);failures=1;return}}
     success()}
-  var expectFailure=function(src){try{parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
+  var expectFailure=@{[src]try{parse(src);err('Should not have parsed `'+src+'`')}catch(e){}}
   expect('a b',[{type:'apply',part:'noun',func:{type:'word',value:'a',part:'noun'},arg:{type:'word',value:'b',part:'noun'}}]);
   expect('1+',[{type:'curry',part:'verb',func:{type:'+',value:'+',part:'verb'},arg:{type:'int',value:'1',part:'noun'}}]);
   expect("1'",[{type:'modNoun',part:'verb',mod:{type:"'",value:"'",part:'adverb'},arg:{type:'int',value:'1',part:'noun'}}]);
@@ -200,19 +200,20 @@ process.stdout.write('\n');
      arg:{type:'compose',part:'noun',
           f:{type:'~',value:'~',part:'verb'},
           g:{type:'=',value:'=',part:'verb'}}}]);
-})();
+};
 
-(function(){
-  var ar=function(R,v){
-    if(v&&v.first&&v.next){var a=[],next=function(xs){if(!xs){R(a);return}xs.first(function(x){ar(function(xr){a.push(xr);xs.next(next)},x)})};next(v)}
+@!{
+  var ar=@{[R,v]
+    if(v&&v.first&&v.next){var a=[],next=@{[xs]if(!xs){R(a);return}xs.first(@{ar(@{[xr]a.push(xr);xs.next(next)},x)})};next(v)}
     else R(v)},
-      expect=function(src,x){
-    var c=0,go=function(){run(src,function(r){c=1;ar(function(r){
-      if(x&&x.call){if(!x(r)){err('`'+src+'` == '+spect(r)+' and does not pass check');failures=1;return}}
-      else if(s(r)!=s(x)){err('`'+src+'` == '+s(r)+' != '+s(x));failures=1;return}
+      srcErr=@{err('`'+x+'` '+y)},
+      expect=@{[src,x]
+    var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]
+      if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
+      else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
       success()},r)})}
     try{go()}catch(e){err(e)}
-    if(!c){err('`'+src+'` does not return a result');failures=1}}
+    if(!c){srcErr(src,'does not return a result');failures=1}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
@@ -327,7 +328,7 @@ process.stdout.write('\n');
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
-  @!{var src='c:C;!c;*c';try{run(src,@{});err('`'+src+'` does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){err('`'+src+'` errors with "'+e+'"');failures=1}}}
+  @!{var src='c:C;!c;*c';try{run(src,@{});srcErr(src,'does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){srcErr(src,'errors with "'+e+'"');failures=1}}}
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
   expect('c:C;d:C;Y{c!5;c!9;!c};*c',5);
@@ -356,16 +357,16 @@ process.stdout.write('\n');
     ^^(x.children[0].text!="Hello, World")0;
     ^^1});
   @!{var src='$`div$"Hello"',c=0,d=0;
-    try{run.call({appendChild:@{d=1}},src,@{c=1})}catch(e){err('`'+src+'` failed with "'+e+'"');failures=1;return}
-    if(!c){err("`"+src+"` does not return a result");failures=1;return}
-    if(!d){err("`"+src+"` does not add HTML to DOM");failures=1;return}
+    try{run.call({appendChild:@{d=1}},src,@{c=1})}catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    if(!c){srcErr(src,"does not return a result");failures=1;return}
+    if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
     success()};
   @!{var src='$`div$"Hello";$`div$"Goodbye"',c=0,d=0;
-    try{run.call({appendChild:@{d++}},src,@{c=1})}catch(e){err('`'+src+'` failed with "'+e+'"');failures=1;return}
-    if(!c){err("`"+src+"` does not return a result");failures=1;return}
-    if(!d){err("`"+src+"` does not add HTML to DOM");failures=1;return}
-    if(d>1){err("`"+src+"` appendChild called more than once");failures;return}
+    try{run.call({appendChild:@{d++}},src,@{c=1})}catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    if(!c){srcErr(src,"does not return a result");failures=1;return}
+    if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
+    if(d>1){srcErr(src,"calls appendChild more than once");failures;return}
     success()};
-})();
+};
 process.stdout.write('\n');
 process.exit(failures);
