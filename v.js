@@ -116,7 +116,7 @@ run=@{[src,R,ops]
      :tr.type=='assign'                       ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
      :tr.type=='apply'||tr.type=='applyMonad' ? (tr.func.type==':'&&tr.arg.type=='arglist'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
      :tr.type=='compose'                      ? evall(@{[f,g]R(@{[R,a,b]g(@{f(R,x)},a,b)})},[tr.f,tr.g],e)
-     :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f(R,x,y)})},[tr.func,tr.arg],e)
+     :tr.type=='curry'                        ? evall(@{[f,x]R(@{[R,y]f.call(m,R,x,y)})},[tr.func,tr.arg],e)
      :tr.type=='modVerb'||tr.type=='modNoun'  ? (ops[tr.mod.type]?eval(@{ops[tr.mod.type](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.value+'`'))
      :tr.type=='func'                         ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.type=='arglist'                      ? evall(@{R({type:'arglist',values:sl(A)})},tr.args,e)
@@ -291,9 +291,9 @@ defaultOps={
       numq(a)?@!{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}
      :chaq(a)?@!{a.close();R(N)}
      :inval('!',a)},
-    @{[R,a,b]
+    @{[R,a,b]var m=this;
       numq(a)&&numq(b) ? R(a%b)
-     :chaq(a)          ? @!{a.put(b);R(a)}
+     :chaq(a)          ? @!{var C=@{!a.isOpen()?error('Cannot put to a closed channel'):a.hasValue()?m.suspend(C):@!{a.put(b);R(a)}};C()}
      :invals('!',a,b)}),
   '@':arit(
     @{[R,a]R(bl(numq(a)||symq(a)))},

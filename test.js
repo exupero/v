@@ -330,6 +330,7 @@ process.stdout.write('\n');
   @!{var src='c:C;!c;*c';try{run(src,@{});err('`'+src+'` does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){err('`'+src+'` errors with "'+e+'"');failures=1}}}
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
+  expect('c:C;d:C;Y{c!5;c!9;!c};*c',5);
   expect('(`text;{x*2})$`li$1 2 3',@{
     ^^(x.length!=3)0;
     ^^(x[0].tagName!='li')0;
