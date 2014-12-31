@@ -1,5 +1,5 @@
-var H=require('virtual-dom/h'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@{^^x&1},pt,to=@{[t,x]^^typeof x==t},sl=@{[a,n]^^Array.prototype.slice.call(a,n)},inval,invals,udf=void 0,N=null,id=@{^^x};
-pt=@{[f]var xs=sl(A,1);^^@{^^f.apply(N,xs.concat(sl(A)))}}
+var H=require('virtual-dom/h'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
+pt=@{[f]var xs=sl(A,1);^^@f.apply(N,xs.concat(sl(A)))}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
 invals=@{[s,a,b]error("Invalid arguments for "+s+": `"+json(a)+"` and `"+json(b)+"`")}
@@ -13,7 +13,7 @@ tokens=@{[input,st]
     acceptRun:@{[valid]while(valid.indexOf(this.nextChar())>=0){}this.backup()},
     acceptSeq:@{[s]for(var i=0;i<s.length;i++){if(t.nextChar()!=s[i]){while(i>=0){t.backup();i--};^^0}}^^1},
     until:@{[stop]while(1){var c=this.nextChar();if(c==eof)^^;^^(stop.indexOf(c)>=0)this.backup()}},
-    done:@{^^this.peek()==eof},
+    done:@this.peek()==eof,
     ignore:@{s=p},
     emit:@{[type,part,f]ts.push({type:type,value:(f||id)(input.slice(s,p)),part:part});s=p},
   };while(st!=N)st=st(t);^^ts}
@@ -51,32 +51,31 @@ lex=@{[input]
   space=@{[t]if(t.acceptSeq('NB. '))t.until('\n');t.ignore();^^init}
   ^^tokens(input,init)}
 
-isNum=@{^^x.type=='int'||x.type=='float'}
+isNum=@x.type=='int'||x.type=='float'
 expr=@{[ts]
   ^^(ts.length==1)ts[0];
   var st,bind,i=ts.length-1;
-  st=@{[a,b]
-    ^^isNum(a)&&isNum(b)               ? 5
-     :a.type=='vector'&&isNum(b)       ? 5
-     :a.type==':'                      ? 0
-     :a.part=='noun'&&b.part=='noun'   ? 1
-     :a.part=='verb'&&b.part=='verb'   ? 1
-     :a.part=='verb'&&b.part=='noun'   ? 2
-     :a.part=='noun'&&b.part=='verb'   ? 3
-     :a.part=='noun'&&b.part=='adverb' ? 4
-     :a.part=='verb'&&b.part=='adverb' ? 4
-     :0}
-  bind=@{[a,b]ts.splice(i-1,2,
-     isNum(a)&&isNum(b)               ? {type:'vector',part:'noun',values:[a,b]}
-    :a.type=='vector'&&isNum(b)       ? {type:'vector',part:'noun',values:a.values.concat([b])}
-    :a.type=='word'&&b.type==':'      ? {type:'assign',part:'noun',name:a.value}
-    :a.part=='noun'&&b.part=='noun'   ? {type:'apply',part:'noun',func:a,arg:b}
-    :a.part=='noun'&&b.part=='verb'   ? {type:'curry',part:'verb',func:b,arg:a}
-    :a.part=='noun'&&b.part=='adverb' ? {type:'modNoun',part:'verb',mod:b,arg:a}
-    :a.part=='verb'&&b.part=='noun'   ? {type:'applyMonad',part:'noun',func:a,arg:b}
-    :a.part=='verb'&&b.part=='verb'   ? {type:'compose',part:'noun',f:a,g:b}
-    :a.part=='verb'&&b.part=='adverb' ? {type:'modVerb',part:'verb',mod:b,arg:a}
-    :error('Invalid operation: '+a.value+' '+b.value))};
+  st=@isNum(x)&&isNum(y)               ? 5
+     :x.type=='vector'&&isNum(y)       ? 5
+     :x.type==':'                      ? 0
+     :x.part=='noun'&&y.part=='noun'   ? 1
+     :x.part=='verb'&&y.part=='verb'   ? 1
+     :x.part=='verb'&&y.part=='noun'   ? 2
+     :x.part=='noun'&&y.part=='verb'   ? 3
+     :x.part=='noun'&&y.part=='adverb' ? 4
+     :x.part=='verb'&&y.part=='adverb' ? 4
+     :0
+  bind=@ts.splice(i-1,2,
+     isNum(x)&&isNum(y)               ? {type:'vector',part:'noun',values:[x,y]}
+    :x.type=='vector'&&isNum(y)       ? {type:'vector',part:'noun',values:x.values.concat([y])}
+    :x.type=='word'&&y.type==':'      ? {type:'assign',part:'noun',name:x.value}
+    :x.part=='noun'&&y.part=='noun'   ? {type:'apply',part:'noun',func:x,arg:y}
+    :x.part=='noun'&&y.part=='verb'   ? {type:'curry',part:'verb',func:y,arg:x}
+    :x.part=='noun'&&y.part=='adverb' ? {type:'modNoun',part:'verb',mod:y,arg:x}
+    :x.part=='verb'&&y.part=='noun'   ? {type:'applyMonad',part:'noun',func:x,arg:y}
+    :x.part=='verb'&&y.part=='verb'   ? {type:'compose',part:'noun',f:x,g:y}
+    :x.part=='verb'&&y.part=='adverb' ? {type:'modVerb',part:'verb',mod:y,arg:x}
+    :error('Invalid operation: '+x.value+' '+y.value));
   while(ts.length>1){
     i=i>ts.length-1?ts.length-1:i;
     if(ts.length==2){bind(ts[i-1],ts[i]);break}
@@ -98,15 +97,15 @@ wraps=@{[ts]
     if(t.type=='(')find(')',@{var x=exprs(x);^^x.length==1?x[0]:{type:'list',part:'noun',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
     else if(t.type=='[')find(']',@{^^{type:'arglist',part:'noun',args:exprs(x)}});
     else if(t.type=='{')find('}',@{[tss]var args;
-      if(tss[0].type=='arglist')args=tss[0].args.map(@{^^x.value}),tss=tss.slice(1);
-      else{var a=tss.filter(@{^^x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')}).map(@{^^x.value});
+      if(tss[0].type=='arglist')args=tss[0].args.map(@x.value),tss=tss.slice(1);
+      else{var a=tss.filter(@x.type=='word'&&(x.value=='x'||x.value=='y'||x.value=='z')).map(@x.value);
         if(a.indexOf('z')!=-1)args=['x','y','z'];
         else if(a.indexOf('y')!=-1)args=['x','y'];
         else if(a.indexOf('x')!=-1)args=['x'];
         else args=[]}
       ^^{type:'func',part:'noun',args:args,body:exprs(tss)}})}
   ^^ts}
-parse=@{^^exprs(wraps(lex(x)))}
+parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 run=@{[src,R,ops]
@@ -141,7 +140,7 @@ run=@{[src,R,ops]
     ^^(a.type!='arglist')f.call(sched,R,a);
     var udfd=a.values.filter(udfq);
     ^^(udfd.length==0)f.apply(sched,[R].concat(a.values));
-    R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@{^^udfq(x)?b.shift():x})})},udfd.length))}
+    R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
@@ -150,28 +149,28 @@ var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,s
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
-symq=@{^^x.type=='symbol'}
+symq=@x.type=='symbol';
 funq=ich('call');
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
-vecq=@{^^numq(x)||seqq(x)}
+vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','hasValue','isOpen');
-colq=@{^^seqq(x)||mapq(x)||chaq(x)}
-domq=@{^^x.tagName&&x.properties&&x.children}
+colq=@seqq(x)||mapq(x)||chaq(x);
+domq=@x.tagName&&x.properties&&x.children;
 
 channel=@{var c={
   put:@{c.values.push(x)},
   close:@{c.open=0},
   take:@{[R]R(c.values.shift())},
-  hasValue:@{^^c.values.length>0},
-  isOpen:@{^^c.open},
+  hasValue:@c.values.length>0,
+  isOpen:@c.open,
   open:1,values:[]};^^c}
 mapC=@{[f]var cs=sl(A,1);^^{
   put:@{error('Cannot put on mapped channel')},
   close:@{error('Cannot close a mapped channel')},
   take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},
-  isOpen:@{^^cs.every(@{^^x.isOpen()})},
-  hasValue:@{^^cs.every(@{^^x.hasValue()})}}}
+  isOpen:@cs.every(@x.isOpen()),
+  hasValue:@cs.every(@x.hasValue())}}
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[_,R,a]
     mapq(a)?a.call(N,R,s)
@@ -186,10 +185,10 @@ arrTseq=@!{
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
-  s.empty=@{^^s([])}
+  s.empty=@s([])
   ^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
-map=@{[R,f,s]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@{^^x!=N})?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
+map=@{[R,f,s]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[R,ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.type==k.type&&a.value==k.value?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
@@ -206,7 +205,7 @@ seqTdic=@{[R,ps,f]
          keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
          values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   R(d)}
-func=@{[x]^^funq(x)?x:@{[R]R(x)}}
+func=@funq(x)?x:@{[R]R(x)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
@@ -214,24 +213,23 @@ counts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?count(C,xs[i++]):R(out
 takesC=@{[R,cs]var i=0,out=[],C=@{out.push(x);i<cs.length?cs[i++].take(C):R(out)};cs[i++].take(C)}
 atomic=@{[f]^^@{[R,x,y]colq(x)||colq(y)?vdo(R,f,x,y):R(f(x,y))}}
 
-reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@{[y]^^y!=null}).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
-vdoq=@{[a,b]
-  ^^(numq(a)||mapq(a)||seqq(a)||chaq(a))&&udfq(b)||
-    (numq(a)||mapq(a)||seqq(a)||chaq(a))&&numq(b)||
-    (numq(a)||mapq(a))&&mapq(b)||
-    (numq(a)||chaq(a))&&chaq(b)||
-    (numq(a)||seqq(b))&&seqq(b)}
+reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@x!=N).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
+vdoq=@(numq(x)||mapq(x)||seqq(x)||chaq(x))&&udfq(y)||
+      (numq(x)||mapq(x)||seqq(x)||chaq(x))&&numq(y)||
+      (numq(x)||mapq(x))&&mapq(y)||
+      (numq(x)||chaq(x))&&chaq(y)||
+      (numq(x)||seqq(y))&&seqq(y)
 vdo=@{[R,f,a,b]
   numq(a)&&udfq(b)?R(f(a))
  :numq(a)&&numq(b)?R(f(a,b))
- :numq(a)&&seqq(b)?map(R,atomic(@{^^f(a,x)}),b)
- :numq(a)&&mapq(b)?b.remap(R,atomic(@{^^f(a,x)}))
+ :numq(a)&&seqq(b)?map(R,atomic(@f(a,x)),b)
+ :numq(a)&&mapq(b)?b.remap(R,atomic(@f(a,x)))
  :numq(a)&&chaq(b)?R(mapC(@{[R,x]R(f(a,x))},b))
- :seqq(a)&&udfq(b)?map(R,atomic(@{^^f(x)}),a)
- :seqq(a)&&numq(b)?map(R,atomic(@{^^f(x,b)}),a)
+ :seqq(a)&&udfq(b)?map(R,atomic(@f(x)),a)
+ :seqq(a)&&numq(b)?map(R,atomic(@f(x,b)),a)
  :seqq(a)&&seqq(b)?map(R,atomic(f),a,b)
- :mapq(a)&&udfq(b)?a.remap(R,atomic(@{^^f(x)}))
- :mapq(a)&&numq(b)?a.remap(R,atomic(@{^^f(x,b)}))
+ :mapq(a)&&udfq(b)?a.remap(R,atomic(@f(x)))
+ :mapq(a)&&numq(b)?a.remap(R,atomic(@f(x,b)))
  :mapq(a)&&mapq(b)?a.remap(R,atomic(f),b)
  :chaq(a)&&udfq(b)?R(mapC(@{[R,x]R(f(x))},a))
  :chaq(a)&&numq(b)?R(mapC(@{[R,x]R(f(x,b))},a))
@@ -258,32 +256,32 @@ cons=@{[R,x,xs,ys]var s={
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
-teq=@{^^x==y||Math.abs(x-y)<1e-10}
+teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]switch(xs[0].value){
   case 'text':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data)}}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 defaultOps={
   '~':arit(
-    @{[R,a]vdoq(a)?vdo(R,@{^^bl(!x)},a):inval('~',a)},
+    @{[R,a]vdoq(a)?vdo(R,@bl(!x),a):inval('~',a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(bl(a==b))
      :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)},[a,b])
      :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
      :invals('~',a,b)}),
-  '+':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@{^^x+y},a,b):invals('+',a,b)}),
+  '+':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@x+y,a,b):invals('+',a,b)}),
   '-':arit(
-    @{[R,a]vecq(a)?vdo(R,@{^^-x},a):inval('-',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x-y},a,b):invals('-',a,b)}),
+    @{[R,a]vecq(a)?vdo(R,@-x,a):inval('-',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x-y,a,b):invals('-',a,b)}),
   '*':arit(
     @{[R,a]var sched=this;
       seqq(a)?a.first(R)
      :chaq(a)?@!{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):sched.suspend(C)};C()}
      :inval('*',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x*y,a,b):invals('*',a,b)}),
   '%':arit(
-    @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
+    @{[R,a]vecq(a)?vdo(R,@1/x,a):inval('%',a)},
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x/y,a,b):invals('%',a,b)}),
   '!':arit(
     @{[R,a]
       numq(a)?@!{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}
@@ -306,22 +304,22 @@ defaultOps={
      :numq(a)&&strq(b)?R(b.slice(0,a))
      :invals('#',a,b)}),
   '_':arit(
-    @{[R,a]vecq(a)?vdo(R,@{^^Math.floor(x)},a):inval('_',a)},
+    @{[R,a]vecq(a)?vdo(R,@Math.floor(x),a):inval('_',a)},
     @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
-  '^':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^Math.pow(x,y)},a,b):invals('^',a,b)}),
+  '^':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@Math.pow(x,y),a,b):invals('^',a,b)}),
   '<':arit(
     @{[R,a]mapq(a)?a.keys(R):inval('<',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x<y)},a,b):invals('<',a,b)}),
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@bl(x<y),a,b):invals('<',a,b)}),
   '>':arit(
     @{[R,a]mapq(a)?a.values(R):inval('>',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^bl(x>y)},a,b):invals('>',a,b)}),
-  '&':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?y:x},a,b):invals('&',a,b)}),
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@bl(x>y),a,b):invals('>',a,b)}),
+  '&':arit(N,@{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x>y?y:x,a,b):invals('&',a,b)}),
   '|':arit(
     @{[R,a]seqq(a)?reverse(R,a):inval('|',a)},
-    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x>y?x:y},a,b):invals('|',a,b)}),
+    @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x>y?x:y,a,b):invals('|',a,b)}),
   '=':arit(N,
     @{[R,a,b]
-      vecq(a)&&vecq(b)               ? vdo(R,@{^^bl(x==y)},a,b)
+      vecq(a)&&vecq(b)               ? vdo(R,@bl(x==y),a,b)
      :to('string',a)&&to('string',b) ? R(bl(a==b))
      :symq(a)&&symq(b)               ? R(bl(a.value==b.value))
      :R(0)}),
