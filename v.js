@@ -1,4 +1,4 @@
-var H=require('virtual-dom/h'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
+var H=require('virtual-dom/h'),CE=require('virtual-dom/create-element'),D=require('virtual-dom/diff'),P=require('virtual-dom/patch'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
 pt=@{[f]var xs=sl(A,1);^^@f.apply(N,xs.concat(sl(A)))}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -109,7 +109,8 @@ parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],sched={suspend:@{forks.push(x)}};if(!ops)ops=defaultOps;
+  var eval,evalss,evall,evals,evala,evalc,apply,find,forks=[],m;if(!ops)ops=defaultOps;
+  m={suspend:@{forks.push(x)},root:this}
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.type)                 ? R(tr)
      :tr.type=='assign'                       ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
@@ -137,15 +138,15 @@ run=@{[src,R,ops]
   evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[f,x],e)}
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   apply=@{[R,f,a]
-    ^^(a.type!='arglist')f.call(sched,R,a);
+    ^^(a.type!='arglist')f.call(m,R,a);
     var udfd=a.values.filter(udfq);
-    ^^(udfd.length==0)f.apply(sched,[R].concat(a.values));
+    ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src),[{}]);
   while(forks.length>0)forks.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config,show;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -259,6 +260,9 @@ cons=@{[R,x,xs,ys]var s={
 teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]switch(xs[0].value){
   case 'text':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data)}}
+show=@{[r,t]
+  if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t))}
+  else{r._node=n=CE(t);r._tree=t;r.appendChild(n)}}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 defaultOps={
@@ -274,9 +278,9 @@ defaultOps={
     @{[R,a]vecq(a)?vdo(R,@-x,a):inval('-',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x-y,a,b):invals('-',a,b)}),
   '*':arit(
-    @{[R,a]var sched=this;
+    @{[R,a]var m=this;
       seqq(a)?a.first(R)
-     :chaq(a)?@!{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):sched.suspend(C)};C()}
+     :chaq(a)?@!{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):m.suspend(C)};C()}
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x*y,a,b):invals('*',a,b)}),
   '%':arit(
@@ -334,12 +338,14 @@ defaultOps={
      :mapq(a)&&seqq(b)?a.assoc(R,b)
      :invals(',',a,b)}),
   '$':arit(
-    @{[R,a]
+    @{[R,a]var m=this;
       numq(a)?R(''+a)
      :seqq(a)?seqTarr(R,a)
+     :domq(a)?@!{show(m.root,a);R(a)}
      :inval('$',a)},
     @{[R,a,b]
       symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.value,{},[]);h._data=x;R(h)},b)
+     :symq(a)&&strq(b)?R(H(a.value,{},[String(b)]))
      :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
      :invals('$',a,b)}),
   dict:arit(@{[R,a]seqTdic(R,a)}),

@@ -327,7 +327,7 @@ process.stdout.write('\n');
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
-  var src='c:C;!c;*c';try{run(src,@{});err('`'+src+'` does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){err('`'+src+'` errors with "'+e+'"');failures=1}}
+  @!{var src='c:C;!c;*c';try{run(src,@{});err('`'+src+'` does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){err('`'+src+'` errors with "'+e+'"');failures=1}}}
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
   expect('(`text;{x*2})$`li$1 2 3',@{
@@ -349,6 +349,22 @@ process.stdout.write('\n');
     ^^(x.children[1].tagName!='li')0;
     ^^(x.children[2].tagName!='li')0;
     ^^1});
+  expect('`div$"Hello, World"',@{
+    ^^(x.tagName!='div')0;
+    ^^(x.children.length!=1)0;
+    ^^(x.children[0].text!="Hello, World")0;
+    ^^1});
+  @!{var src='$`div$"Hello"',c=0,d=0;
+    try{run.call({appendChild:@{d=1}},src,@{c=1})}catch(e){err('`'+src+'` failed with "'+e+'"');failures=1;return}
+    if(!c){err("`"+src+"` does not return a result");failures=1;return}
+    if(!d){err("`"+src+"` does not add HTML to DOM");failures=1;return}
+    success()};
+  @!{var src='$`div$"Hello";$`div$"Goodbye"',c=0,d=0;
+    try{run.call({appendChild:@{d++}},src,@{c=1})}catch(e){err('`'+src+'` failed with "'+e+'"');failures=1;return}
+    if(!c){err("`"+src+"` does not return a result");failures=1;return}
+    if(!d){err("`"+src+"` does not add HTML to DOM");failures=1;return}
+    if(d>1){err("`"+src+"` appendChild called more than once");failures;return}
+    success()};
 })();
 process.stdout.write('\n');
 process.exit(failures);
