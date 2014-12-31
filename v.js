@@ -32,9 +32,9 @@ lex=@{[input]
         case ' ':^^space;
         case '`':t.ignore();^^symbol;
         case '"':t.ignore();^^string;
-        case '/':t.nextChar()==':'?e('/:','adverb'):@{t.backup();e('/','adverb')}();break;
-        case '\\':t.nextChar()==':'?e('\\:','adverb'):@{t.backup();e('\\','adverb')}();break;
-        case '\'':t.nextChar()==':'?e("':",'adverb'):@{t.backup();e("'",'adverb')}();break;
+        case '/':t.nextChar()==':'?e('/:','adverb'):@!{t.backup();e('/','adverb')};break;
+        case '\\':t.nextChar()==':'?e('\\:','adverb'):@!{t.backup();e('\\','adverb')};break;
+        case '\'':t.nextChar()==':'?e("':",'adverb'):@!{t.backup();e("'",'adverb')};break;
         case 'C':e('channel','noun');break;
         case 'D':e('dict','verb');break;
         case 'L':e('lazy','verb');break;
@@ -178,7 +178,7 @@ strTsym=@{var s={type:'symbol',value:x,
    :domq(a)?R(H(s.value,{},[a]))
    :seqq(a)?seqTarr(@{R(H(s.value,{},x))},a)
    :inval(json(s),a)}};^^s}
-arrTseq=@{
+arrTseq=@!{
   var s=@{[xs]^^{
     type:'seq',
     empty:s.empty,
@@ -187,7 +187,7 @@ arrTseq=@{
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
     append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
   s.empty=@{^^s([])}
-  ^^s}()
+  ^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 map=@{[R,f,s]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@{^^x!=N})?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
@@ -242,12 +242,12 @@ concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;z
 reverse=@{[R,xs]var out=arrTseq.empty();@(xs){[ys]^^(!ys)R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
 take=@{[R,n,xs]
    n==0?R(xs)
-  :n>0?@{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}()
+  :n>0?@!{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}
   :n<0?seqTarr(@{R(arrTseq(x.slice(x.length+n)))},xs)
   :udf}
 drop=@{[R,n,xs]
    n==0?R(xs)
-  :n>0?@{var i=0;@(xs){[ys]^^(!ys)R(N);^^(i==n)R(ys);i++;ys.next(C)}}()
+  :n>0?@!{var i=0;@(xs){[ys]^^(!ys)R(N);^^(i==n)R(ys);i++;ys.next(C)}}
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
@@ -278,7 +278,7 @@ defaultOps={
   '*':arit(
     @{[R,a]var sched=this;
       seqq(a)?a.first(R)
-     :chaq(a)?@{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):sched.suspend(C)};C()}()
+     :chaq(a)?@!{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):sched.suspend(C)};C()}
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   '%':arit(
@@ -286,12 +286,12 @@ defaultOps={
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
   '!':arit(
     @{[R,a]
-      numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}()
-     :chaq(a)?@{a.close();R(N)}()
+      numq(a)?@!{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}
+     :chaq(a)?@!{a.close();R(N)}
      :inval('!',a)},
     @{[R,a,b]
       numq(a)&&numq(b) ? R(a%b)
-     :chaq(a)          ? @{a.put(b);R(a)}()
+     :chaq(a)          ? @!{a.put(b);R(a)}
      :invals('!',a,b)}),
   '@':arit(
     @{[R,a]R(bl(numq(a)||symq(a)))},
@@ -357,8 +357,8 @@ defaultOps={
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
       else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
     @{[R,f,a,b]
-      if(f.arity==1){^^numq(a)?@{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}()
-                      :funq(a)?@{@(b){a(@{[t]t?f(C,x):R(x)},x)}}()
+      if(f.arity==1){^^numq(a)?@!{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}
+                      :funq(a)?@!{@(b){a(@{[t]t?f(C,x):R(x)},x)}}
                       :invals('f/',a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
   '\\':aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
