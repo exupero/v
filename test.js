@@ -327,6 +327,9 @@ process.stdout.write('\n');
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
+  var src='c:C;!c;*c';try{run(src,@{});err('`'+src+'` does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){err('`'+src+'` errors with "'+e+'"');failures=1}}
+  expect('c:C;#c',1);
+  expect('c:C;!c;#c',0);
   expect('(`text;{x*2})$`li$1 2 3',@{
     ^^(x.length!=3)0;
     ^^(x[0].tagName!='li')0;

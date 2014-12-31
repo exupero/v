@@ -155,12 +155,23 @@ funq=ich('call');
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@{^^numq(x)||seqq(x)}
-chaq=ich('put','take','hasValue');
+chaq=ich('put','take','close','hasValue','isOpen');
 colq=@{^^seqq(x)||mapq(x)||chaq(x)}
 domq=@{^^x.tagName&&x.properties&&x.children}
 
-channel=@{var c={put:@{c.values.push(x)},take:@{[R]R(c.values.shift())},hasValue:@{^^c.values.length>0},values:[]};^^c}
-mapC=@{[f]var cs=sl(A,1);^^{put:@{error('Cannot put on mapped channel')},take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},hasValue:@{^^cs.every(@{^^x.hasValue()})}}}
+channel=@{var c={
+  put:@{c.values.push(x)},
+  close:@{c.open=0},
+  take:@{[R]R(c.values.shift())},
+  hasValue:@{^^c.values.length>0},
+  isOpen:@{^^c.open},
+  open:1,values:[]};^^c}
+mapC=@{[f]var cs=sl(A,1);^^{
+  put:@{error('Cannot put on mapped channel')},
+  close:@{error('Cannot close a mapped channel')},
+  take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},
+  isOpen:@{^^cs.every(@{^^x.isOpen()})},
+  hasValue:@{^^cs.every(@{^^x.hasValue()})}}}
 strTsym=@{var s={type:'symbol',value:x,
   call:@{[_,R,a]
     mapq(a)?a.call(N,R,s)
@@ -267,14 +278,17 @@ defaultOps={
   '*':arit(
     @{[R,a]var sched=this;
       seqq(a)?a.first(R)
-     :chaq(a)?@{var C=@{a.hasValue()?a.take(R):sched.suspend(C)};C()}()
+     :chaq(a)?@{var C=@{!a.isOpen()?error('Cannot take from a closed channel'):a.hasValue()?a.take(R):sched.suspend(C)};C()}()
      :inval('*',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x*y},a,b):invals('*',a,b)}),
   '%':arit(
     @{[R,a]vecq(a)?vdo(R,@{^^1/x},a):inval('%',a)},
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@{^^x/y},a,b):invals('%',a,b)}),
   '!':arit(
-    @{[R,a]numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}():inval('!',a)},
+    @{[R,a]
+      numq(a)?@{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}()
+     :chaq(a)?@{a.close();R(N)}()
+     :inval('!',a)},
     @{[R,a,b]
       numq(a)&&numq(b) ? R(a%b)
      :chaq(a)          ? @{a.put(b);R(a)}()
@@ -283,7 +297,10 @@ defaultOps={
     @{[R,a]R(bl(numq(a)||symq(a)))},
     @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
   '#':arit(
-    @{[R,a]seqq(a)?count(R,a):inval('#',a)},
+    @{[R,a]
+      seqq(a)?count(R,a)
+     :chaq(a)?R(a.isOpen())
+     :inval('#',a)},
     @{[R,a,b]
       numq(a)&&seqq(b)?take(R,a,b)
      :numq(a)&&strq(b)?R(b.slice(0,a))
