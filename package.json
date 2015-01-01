@@ -1,0 +1,7 @@
+{
+  "name": "v",
+  "devDependencies": {
+    "browserify": "4.1.2",
+    "virtual-dom": "0.0.24"
+  }
+}
