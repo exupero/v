@@ -1,5 +1,5 @@
 Error.stackTraceLimit = 30
-var util=require('util'),failures=0,spect=@{^^util.inspect(x,{depth:N})},l=console.log,err=@{process.stderr.write('\n');console.error.apply(N,A)},s=JSON.stringify,diff=@{err('expected',spect(x));err('actually',spect(y))},success=@{process.stdout.write('.')},spy=@{l(x);^^x};
+var util=require('util'),failures=0,spect=@util.inspect(x,{depth:N}),l=console.log,err=@{process.stderr.write('\n');console.error.apply(N,A)},s=JSON.stringify,diff=@{err('expected',spect(x));err('actually',spect(y))},success=@{process.stdout.write('.')},spy=@{l(x);^^x};
 
 process.stdout.write('\n');
 @!{

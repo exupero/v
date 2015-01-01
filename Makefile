@@ -6,7 +6,7 @@ test: build/v.core.test.js
 build/v.core.js: src/macros.sjs src/v.core.js
 	cat src/macros.sjs src/v.core.js | sjs -s -o build/v.core.js
 
-build/v.js: src/macros.sjs src/v.js
+build/v.js: build/v.core.js src/macros.sjs src/v.js
 	cat src/macros.sjs src/v.js | sjs -s -o build/v.js
 
 build/v.min.js: build/v.js
