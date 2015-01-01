@@ -145,7 +145,7 @@ module.exports=run=@{[src,R,ops]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config,show;
+var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -253,6 +253,7 @@ drop=@{[R,n,xs]
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
+rollPairs=@{[R,s]s.first(@{[x]s.next(@{[xs]xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)})})}
 cons=@{[R,x,xs,ys]var s={
   type:'seq',
   empty:arrTseq.empty,
@@ -355,7 +356,7 @@ defaultOps={
   dict:arit(@{[R,a]seqTdic(R,a)}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
-  "':":aarit(@{[R,f,a]var ps=@{[R,s]cons(R,@{[R]s.first(@{[x]s.next(@{[xs]^^(xs)xs.first(@{[y]R([x,y])})})})},@{[R]s.next(@{[xs]xs?ps(R,xs):R(N)})})};ps(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
+  "':":aarit(@{[R,f,a]rollPairs(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
   '/:':aarit(
     map,
     @{[R,f,a,b]map(R,@{[R,x]f(R,a,x)},b)}),
@@ -369,5 +370,7 @@ defaultOps={
                       :funq(a)?@!{@(b){a(@{[t]t?f(C,x):R(x)},x)}}
                       :invals('f/',a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
-  '\\':aarit(@{[R,f,a]var C=@{[R,x,xs]if(!xs)^^;xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)})};a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
+  '\\':aarit(@{[R,f,a]
+    var C=@{[R,x,xs]xs?xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)}):R(N)};
+    a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 }

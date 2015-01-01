@@ -203,17 +203,15 @@ process.stdout.write('\n');
 };
 
 @!{
-  var ar=@{[R,v]
-    if(v&&v.first&&v.next){var a=[],next=@{[xs]if(!xs){R(a);return}xs.first(@{ar(@{[xr]a.push(xr);xs.next(next)},x)})};next(v)}
-    else R(v)},
+  var ar=@{[R,v]seqq(v)?@!{var a=[];@(v){[xs]xs?xs.first(@{ar(@{[xr]a.push(xr);xs.next(C)},x)}):R(a)}}:R(v)},
       srcErr=@{err('`'+x+'` '+y)},
       expect=@{[src,x]
-    var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]
+    var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]c=2
       if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
       else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
-      success()},r)})}
+      success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}})}
     try{go()}catch(e){err(e)}
-    if(!c){srcErr(src,'does not return a result');failures=1}}
+    if(c==0){srcErr(src,'does not return a result');failures=1}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('1+1 2 3',[2,3,4]);
