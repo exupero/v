@@ -263,7 +263,8 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]switch(xs[0].value){
-  case 'text':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data)}}
+  case 't':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data);
+  default:error('Invalid selection configuration key `'+xs[0].value)}}
 show=@{[r,t]
   if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t))}
   else{r._node=n=CE(t);r._tree=t;r.appendChild(n)}}

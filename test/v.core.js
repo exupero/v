@@ -330,7 +330,7 @@ process.stdout.write('\n');
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
   expect('c:C;d:C;Y{c!5;c!9;!c};*c',5);
-  expect('(`text;{x*2})$`li$1 2 3',@{
+  expect('(`t;{x*2})$`li$1 2 3',@{
     ^^(x.length!=3)0;
     ^^(x[0].tagName!='li')0;
     ^^(x[0].children.length!=1)0;
