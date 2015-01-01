@@ -30,8 +30,8 @@ lex=@{[input]
       if(';()[]{}'.indexOf(c)>=0){e(c);continue}
       switch(c){
         case ' ':^^space;
-        case '`':t.ignore();^^symbol;
-        case '"':t.ignore();^^string;
+        case '`':t.ignore();^^t.accept('"')?@!{t.ignore();^^string('symbol')}:symbol;
+        case '"':t.ignore();^^string('string');
         case '/':t.nextChar()==':'?e('/:','adverb'):@!{t.backup();e('/','adverb')};break;
         case '\\':t.nextChar()==':'?e('\\:','adverb'):@!{t.backup();e('\\','adverb')};break;
         case '\'':t.nextChar()==':'?e("':",'adverb'):@!{t.backup();e("'",'adverb')};break;
@@ -44,10 +44,10 @@ lex=@{[input]
         default:t.backup();^^t.accept(digits)?number:@{[t]t.until(stop);t.emit('word','noun');^^init}}}}
   symbol=@{[t]t.until(stop);t.emit('symbol','noun');^^init}
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','noun')}else t.emit('int','noun');^^init}
-  string=@{[t]
+  string=@{[ty]^^@{[t]
     t.until('"\\');
-    if(t.peek()=='"'){t.emit('string','noun',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
-    else{t.accept('\\');t.accept('"');^^string}}
+    if(t.peek()=='"'){t.emit(ty,'noun',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
+    else{t.accept('\\');t.accept('"');^^string(ty)}}}
   space=@{[t]if(t.acceptSeq('NB. '))t.until('\n');t.ignore();^^init}
   ^^tokens(input,init)}
 
@@ -142,7 +142,7 @@ module.exports=run=@{[src,R,ops]
     var udfd=a.values.filter(udfq);
     ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
-  find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
+  find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
 var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show;
@@ -263,7 +263,7 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]switch(xs[0].value){
-  case 't':^^func(xs[1])(@{R(H(h.tagName,h.properties,[String(x)]))},h._data);
+  case 't':^^func(xs[1])(@R(H(h.tagName,h.properties,[String(x)])),h._data);
   default:error('Invalid selection configuration key `'+xs[0].value)}}
 show=@{[r,t]
   if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t))}

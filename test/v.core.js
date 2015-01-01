@@ -200,6 +200,7 @@ process.stdout.write('\n');
      arg:{type:'compose',part:'noun',
           f:{type:'~',value:'~',part:'verb'},
           g:{type:'=',value:'=',part:'verb'}}}]);
+  expect('`"hello world"',[{type:'symbol',value:'hello world',part:'noun'}]);
 };
 
 @!{
@@ -342,12 +343,16 @@ process.stdout.write('\n');
     ^^(x[2].children.length!=1)0;
     ^^(x[2].children[0].text!='6')0;
     ^^1});
-  expect('`ul(`li$1 2 3)',@{
+  expect('`ul@`li$1 2 3',@{
     ^^(x.tagName!='ul')0;
     ^^(x.children.length!=3)0;
     ^^(x.children[0].tagName!='li')0;
     ^^(x.children[1].tagName!='li')0;
     ^^(x.children[2].tagName!='li')0;
+    ^^1});
+  expect('`ul@(`t;{x})$`li$!15',@{
+    ^^(x.tagName!='ul')0;
+    ^^(x.children.length!=15)0;
     ^^1});
   expect('`div$"Hello, World"',@{
     ^^(x.tagName!='div')0;
