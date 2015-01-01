@@ -108,7 +108,7 @@ wraps=@{[ts]
 parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
-run=@{[src,R,ops]
+module.exports=run=@{[src,R,ops]
   var eval,evalss,evall,evals,evala,evalc,apply,find,fs=[],sus=@fs.push(x),m;if(!ops)ops=defaultOps;
   m={root:this};
   eval=@{[R,tr,e]
@@ -143,7 +143,7 @@ run=@{[src,R,ops]
     ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{type:'arglist',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(x)x}error("Cannot find var `"+w+"`")}
-  evalss(R,parse(src),[{}]);while(fs.length>0)fs.shift()()}
+  evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
 var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,func,config,show;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
@@ -344,6 +344,7 @@ defaultOps={
     @{[R,a]var m=this;
       numq(a)?R(''+a)
      :seqq(a)?seqTarr(R,a)
+     :symq(a)?@!{var h=H(a.value,{},[]);show(m.root,h);R(h)}
      :domq(a)?@!{show(m.root,a);R(a)}
      :inval('$',a)},
     @{[R,a,b]
