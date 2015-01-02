@@ -155,7 +155,7 @@ strq=pt(to,'string');
 symq=@x.t=='symbol';
 funq=ich('call','apply');
 arrq=@{^^x instanceof Array};
-seqq=ich('empty','next','first','prepend','append');
+seqq=ich('next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','isOpen');
@@ -192,18 +192,15 @@ strTsym=@{var s={t:'symbol',v:x,
    :seqq(a)?seqTarr(@{R(H(s.v,{},x))},a)
    :inval(json(s),a)},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
-arrTseq=@!{
-  var s=@{[xs]var d={
+arrTseq=@{[xs]
+  var s={
     t:'seq',
-    empty:s.empty,
     first:@{[R]R(xs[0])},
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
     append:@{[R,x]R(arrTseq(xs.concat([x])))},
     call:@{[_,R,n]R(xs[n])},
-    apply:@{[_,xs]d.call.apply(N,[N].concat(xs))}};^^d}
-  s.empty=@s([])
-  ^^s}
+    apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
@@ -255,7 +252,7 @@ vdo=@{[R,f,a,b]
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
 concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
-reverse=@{[R,xs]var out=arrTseq.empty();@(xs){[ys]^^(!ys)R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
+reverse=@{[R,xs]var out=arrTseq([]);@(xs){[ys]^^(!ys)R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
 take=@{[R,n,xs]
    n==0?R(xs)
   :n>0?@!{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}
@@ -272,7 +269,6 @@ cons=@{[R,x,xs,ys]var s={
   t:'seq',
   call:@{[_,R,n]n==0?s.first(R):s.next(@{x.call(N,R,n-1)})},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))},
-  empty:arrTseq.empty,
   first:@{[R]x(R)},
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
