@@ -155,7 +155,7 @@ module.exports=run=@{[src,R,opts]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc;
+var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -167,7 +167,7 @@ mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','isOpen');
 colq=@seqq(x)||mapq(x)||chaq(x);
-domq=@x.tagName&&x.properties&&x.children;
+domq=@x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
 
 jsTv=@{
@@ -281,11 +281,12 @@ cons=@{[R,x,xs,ys]var s={
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 assoc=@{[o,p,v]var x={},k;for(k in o)x[k]=o[k];x[p]=v;^^x}
+assocIn=@{[o,ps,v]^^ps.length==1?assoc(o,ps[0],v):assoc(o,ps[0],assocIn(o,ps.slice(1),v))}
 teq=@x==y||Math.abs(x-y)<1e-10
-config=@{[R,h,xs]switch(xs[0].v){
-  case 'a':^^func(xs[2])(@R(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children)),h._data);
-  case 's':^^func(xs[2])(@R(H(h.tagName,assoc(h.properties,"style",assoc(h.properties.style,xs[1].v,x)),h.children)),h._data);
-  case 't':^^func(xs[1])(@R(H(h.tagName,h.properties,[String(x)])),h._data);
+config=@{[R,h,xs]var r=@{var x=assoc(x,'_data',h._data);R(y.length>0?config(R,x,[xs[0]].concat(y)):x)};switch(xs[0].v){
+  case 'a':^^func(xs[2])(@r(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children),xs.slice(3)),h._data);
+  case 's':^^func(xs[2])(@r(H(h.tagName,assocIn(h.properties,["style",xs[1].v],x),h.children),xs.slice(3)),h._data);
+  case 't':^^func(xs[1])(@r(H(h.tagName,h.properties,[String(x)]),[]),h._data);
   default:error('Invalid selection configuration key `'+xs[0].v)}}
 show=@{[r,t]
   if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t))}

@@ -356,8 +356,24 @@ process.stdout.write('\n');
     ^^(x[2].properties['dataX']!=3)0;
     ^^1});
   expect('(`s;`fill;{x})$`li$("green";"blue")',@{
-    ^^(x[0].properties.style['fill']!="green")0;
-    ^^(x[1].properties.style['fill']!="blue")0;
+    ^^(x[0].properties.style.fill!="green")0;
+    ^^(x[1].properties.style.fill!="blue")0;
+    ^^1});
+  expect('(`a;`height;{x*2})$(`a;`width;{x})$`rect$1 2 3',@{
+    ^^(x[0].properties.width!=1)0;
+    ^^(x[0].properties.height!=2)0;
+    ^^(x[1].properties.width!=2)0;
+    ^^(x[1].properties.height!=4)0;
+    ^^(x[2].properties.width!=3)0;
+    ^^(x[2].properties.height!=6)0;
+    ^^1});
+  expect('(`a;`width;{x};`height;{x*2})$`rect$1 2 3',@{
+    ^^(x[0].properties.width!=1)0;
+    ^^(x[0].properties.height!=2)0;
+    ^^(x[1].properties.width!=2)0;
+    ^^(x[1].properties.height!=4)0;
+    ^^(x[2].properties.width!=3)0;
+    ^^(x[2].properties.height!=6)0;
     ^^1});
   expect('`ul@`li$1 2 3',@{
     ^^(x.tagName!='ul')0;
