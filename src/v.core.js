@@ -375,7 +375,9 @@ defaultOps={
     @{[R,a,b]
       symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x;R(h)},b)
      :symq(a)&&strq(b)?R(H(a.v,{},[String(b)]))
+     :seqq(a)&&symq(b)?seqTarr(@{[xs]config(R,H(b.v,{},[]),xs)},a)
      :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
+     :seqq(a)&&domq(b)?seqTarr(@{[xs]config(R,b,xs)},a)
      :invals('$',a,b)}),
   dict:arit(@{[R,a]R(seqTdic(a))}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),

@@ -214,7 +214,7 @@ process.stdout.write('\n');
       else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
       success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}},opts)}
     try{go()}catch(e){err(e)}
-    if(c==0){srcErr(src,'does not return a result');failures=1}}
+    if(c==0){srcErr(src,'does not return a result');failures=1}};
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('"a" "b" "c"',['a','b','c']);
@@ -391,6 +391,15 @@ process.stdout.write('\n');
     ^^(x.children.length!=1)0;
     ^^(x.children[0].text!="Hello, World")0;
     ^^1});
+  expect('(`a;`width;5)$`rect',@{
+    ^^(x.tagName!='rect')0;
+    ^^(x.properties.width!=5)0;
+    ^^1});
+  expect('(`a;`width;5)$(`a;`height;15)$`rect',@{
+    ^^(x.tagName!='rect')0;
+    ^^(x.properties.width!=5)0;
+    ^^(x.properties.height!=15)0;
+    ^^1});
   @!{var src='$`div$"Hello"',c=0,d=0;
     try{run.call({appendChild:@{d=1}},src,@{c=1})}
     catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
@@ -398,6 +407,13 @@ process.stdout.write('\n');
     if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
     success()};
   @!{var src='$`div$"Hello";$`div$"Goodbye"',c=0,d=0;
+    try{run.call({appendChild:@{d++}},src,@{c=1})}
+    catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    if(!c){srcErr(src,"does not return a result");failures=1;return}
+    if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
+    if(d>1){srcErr(src,"calls appendChild more than once");failures;return}
+    success()};
+  @!{var src='$(`a;`width;200;`height;200)$`svg@(`a;`width;100;`height;100;`x;50;`y;50;`fill;"green")$`rect',c=0,d=0;
     try{run.call({appendChild:@{d++}},src,@{c=1})}
     catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
     if(!c){srcErr(src,"does not return a result");failures=1;return}
