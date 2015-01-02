@@ -217,6 +217,7 @@ process.stdout.write('\n');
     if(c==0){srcErr(src,'does not return a result');failures=1}}
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
+  expect('"a" "b" "c"',['a','b','c']);
   expect('1+1 2 3',[2,3,4]);
   expect('1 2 3+1 2 3',[2,4,6]);
   expect('12-1 2 3 4 6',[11,10,9,8,6]);

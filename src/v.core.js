@@ -1,4 +1,4 @@
-var H=require('virtual-dom/h'),CE=require('virtual-dom/create-element'),D=require('virtual-dom/diff'),P=require('virtual-dom/patch'),tokens,lex,isNum,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
+var H=require('virtual-dom/h'),CE=require('virtual-dom/create-element'),D=require('virtual-dom/diff'),P=require('virtual-dom/patch'),tokens,lex,isNum,isNumVec,isStr,isStrVec,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
 pt=@{[f]var xs=sl(A,1);^^@f.apply(N,xs.concat(sl(A)))}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -52,31 +52,38 @@ lex=@{[input]
   ^^tokens(input,init)}
 
 isNum=@x.t=='int'||x.t=='float'
+isNumVec=@x.t=='vector'&&isNum(x.values[0])
+isStr=@x.t=='string'
+isStrVec=@x.t=='vector'&&x.values[0].t=='string'
 expr=@{[ts]
   ^^(ts.length==1)ts[0];
   var st,bind,i=ts.length-1;
-  st=@isNum(x)&&isNum(y)      ? 5
-     :x.t=='vector'&&isNum(y) ? 5
-     :x.t=='.'&&y.t=='word'   ? 5
-     :x.t==':'                ? 0
-     :x.p=='n'&&y.p=='n'      ? 1
-     :x.p=='v'&&y.p=='v'      ? 1
-     :x.p=='v'&&y.p=='n'      ? 2
-     :x.p=='n'&&y.p=='v'      ? 3
-     :x.p=='n'&&y.p=='a'      ? 4
-     :x.p=='v'&&y.p=='a'      ? 4
+  st=@isNum(x)&&isNum(y)    ? 5
+     :isNumVec(x)&&isNum(y) ? 5
+     :isStr(x)&&isStr(y)    ? 5
+     :isStrVec(x)&&isStr(y) ? 5
+     :x.t=='.'&&y.t=='word' ? 5
+     :x.t==':'              ? 0
+     :x.p=='n'&&y.p=='n'    ? 1
+     :x.p=='v'&&y.p=='v'    ? 1
+     :x.p=='v'&&y.p=='n'    ? 2
+     :x.p=='n'&&y.p=='v'    ? 3
+     :x.p=='n'&&y.p=='a'    ? 4
+     :x.p=='v'&&y.p=='a'    ? 4
      :0
   bind=@ts.splice(i-1,2,
-     isNum(x)&&isNum(y)      ? {t:'vector',p:'n',values:[x,y]}
-    :x.t=='vector'&&isNum(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
-    :x.t=='word'&&y.t==':'   ? {t:'assign',p:'n',name:x.v}
-    :x.t=='.'&&y.t=='word'   ? {t:'data',p:'n',v:y.v}
-    :x.p=='n'&&y.p=='n'      ? {t:'apply',p:'n',func:x,arg:y}
-    :x.p=='n'&&y.p=='v'      ? {t:'curry',p:'v',func:y,arg:x}
-    :x.p=='n'&&y.p=='a'      ? {t:'modNoun',p:'v',mod:y,arg:x}
-    :x.p=='v'&&y.p=='n'      ? {t:'applyMonad',p:'n',func:x,arg:y}
-    :x.p=='v'&&y.p=='v'      ? {t:'compose',p:'n',f:x,g:y}
-    :x.p=='v'&&y.p=='a'      ? {t:'modVerb',p:'v',mod:y,arg:x}
+     isNum(x)&&isNum(y)    ? {t:'vector',p:'n',values:[x,y]}
+    :isNumVec(x)&&isNum(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
+    :isStr(x)&&isStr(y)    ? {t:'vector',p:'n',values:[x,y]}
+    :isStrVec(x)&&isStr(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
+    :x.t=='word'&&y.t==':' ? {t:'assign',p:'n',name:x.v}
+    :x.t=='.'&&y.t=='word' ? {t:'data',p:'n',v:y.v}
+    :x.p=='n'&&y.p=='n'    ? {t:'apply',p:'n',func:x,arg:y}
+    :x.p=='n'&&y.p=='v'    ? {t:'curry',p:'v',func:y,arg:x}
+    :x.p=='n'&&y.p=='a'    ? {t:'modNoun',p:'v',mod:y,arg:x}
+    :x.p=='v'&&y.p=='n'    ? {t:'applyMonad',p:'n',func:x,arg:y}
+    :x.p=='v'&&y.p=='v'    ? {t:'compose',p:'n',f:x,g:y}
+    :x.p=='v'&&y.p=='a'    ? {t:'modVerb',p:'v',mod:y,arg:x}
     :error('Invalid operation: '+x.v+' '+y.v));
   while(ts.length>1){
     i=i>ts.length-1?ts.length-1:i;
