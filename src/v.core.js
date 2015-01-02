@@ -57,6 +57,7 @@ expr=@{[ts]
   var st,bind,i=ts.length-1;
   st=@isNum(x)&&isNum(y)      ? 5
      :x.t=='vector'&&isNum(y) ? 5
+     :x.t=='.'&&y.t=='word'   ? 5
      :x.t==':'                ? 0
      :x.p=='n'&&y.p=='n'      ? 1
      :x.p=='v'&&y.p=='v'      ? 1
@@ -69,6 +70,7 @@ expr=@{[ts]
      isNum(x)&&isNum(y)      ? {t:'vector',p:'n',values:[x,y]}
     :x.t=='vector'&&isNum(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
     :x.t=='word'&&y.t==':'   ? {t:'assign',p:'n',name:x.v}
+    :x.t=='.'&&y.t=='word'   ? {t:'data',p:'n',v:y.v}
     :x.p=='n'&&y.p=='n'      ? {t:'apply',p:'n',func:x,arg:y}
     :x.p=='n'&&y.p=='v'      ? {t:'curry',p:'v',func:y,arg:x}
     :x.p=='n'&&y.p=='a'      ? {t:'modNoun',p:'v',mod:y,arg:x}
@@ -108,8 +110,8 @@ wraps=@{[ts]
 parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
-module.exports=run=@{[src,R,ops]
-  var eval,evalss,evall,evals,evala,evalc,apply,find,fs=[],sus=@fs.push(x),m,ops=ops||defaultOps,R=R||id;
+module.exports=run=@{[src,R,opts]
+  var eval,evalss,evall,evals,evala,evalc,apply,find,fs=[],sus=@fs.push(x),m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id;
   m={root:this};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.t)              ? R(tr)
@@ -125,6 +127,7 @@ module.exports=run=@{[src,R,ops]
      :tr.t=='fork'                      ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
      :tr.t=='list'                      ? evals(R,tr.values,e)
      :tr.t=='word'                      ? eval(R,find(tr.v,e),N)
+     :tr.t=='data'                      ? R(jsTv(opts.data[tr.v]))
      :symq(tr)                          ? R(strTsym(tr.v))
      :tr.t=='int'                       ? R(parseInt(tr.v))
      :tr.t=='float'                     ? R(parseFloat(tr.v))
@@ -145,19 +148,26 @@ module.exports=run=@{[src,R,ops]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,mapq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show;
+var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
 symq=@x.t=='symbol';
 funq=ich('call');
+arrq=@{^^x instanceof Array};
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','isOpen');
 colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x.tagName&&x.properties&&x.children;
+objq=@{^^x instanceof Object}
 
+jsTv=@{
+  ^^arrq(x)?arrTseq(x.map(jsTv))
+   :objq(x)?objTdic(x)
+   :x}
+objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([{t:'symbol',v:k,p:'n'},jsTv(x[k])]));^^seqTdic(arrTseq(s))}
 channel=@{[s]var c={
   put:@{[R,x]
     !c.open?error('Cannot put to a closed channel')
@@ -194,21 +204,21 @@ arrTseq=@!{
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
-seqTdic=@{[R,ps,f]
+seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={call:@{[_,R,k]get(R,k)},
          get:get,
-         assoc:@{[R,a]ps.append(@{seqTdic(R,x,f)},a)},
+         assoc:@{[R,a]ps.append(@R(seqTdic(x,f)),a)},
          dissoc:@{[R]},
          remap:@{[R,g,a]
-           udfq(a)&&f ? seqTdic(R,ps,@{[R,x]f(@{g(R,x)},x)})
-          :udfq(a)    ? seqTdic(R,ps,g)
-          :f          ? seqTdic(R,ps,@{[R,v1,k]a.get(@{[v2]f(@{g(R,x,v2)},v1,v2)},k)})
-          :seqTdic(R,ps,@{[R,v1,k]a.get(@{[v2]g(R,v1,v2)},k)})},
+           udfq(a)&&f ? R(seqTdic(ps,@{[R,x]f(@{g(R,x)},x)}))
+          :udfq(a)    ? R(seqTdic(ps,g))
+          :f          ? R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]f(@{g(R,x,v2)},v1,v2)},k)}))
+          :R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]g(R,v1,v2)},k)}))},
          matches:@{[R,a]@(ps){[xs]^^(!xs)R(1);xs.first(@{pair(@{[k,v]a.get(@{R(bl(x==v))},k)},x)})}},
          keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
          values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
-  R(d)}
+  ^^d}
 func=@funq(x)?x:@{[R]R(x)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
@@ -354,7 +364,7 @@ defaultOps={
      :symq(a)&&strq(b)?R(H(a.v,{},[String(b)]))
      :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
      :invals('$',a,b)}),
-  dict:arit(@{[R,a]seqTdic(R,a)}),
+  dict:arit(@{[R,a]R(seqTdic(a))}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
   "':":aarit(@{[R,f,a]rollPairs(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),

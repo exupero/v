@@ -201,16 +201,18 @@ process.stdout.write('\n');
           f:{t:'~',v:'~',p:'v'},
           g:{t:'=',v:'=',p:'v'}}}]);
   expect('`"hello world"',[{t:'symbol',v:'hello world',p:'n'}]);
+  expect('.data',[{t:'data',p:'n',v:'data'}]);
+  expect('`a.obj',[{t:'apply',p:'n',func:{t:'symbol',v:'a',p:'n'},arg:{t:'data',p:'n',v:'obj'}}]);
 };
 
 @!{
   var ar=@{[R,v]seqq(v)?@!{var a=[];@(v){[xs]xs?xs.first(@{ar(@{[xr]a.push(xr);xs.next(C)},x)}):R(a)}}:R(v)},
       srcErr=@{err('`'+x+'` '+y)},
-      expect=@{[src,x]
+      expect=@{[src,x,opts]
     var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]c=2
       if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
       else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
-      success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}})}
+      success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}},opts)}
     try{go()}catch(e){err(e)}
     if(c==0){srcErr(src,'does not return a result');failures=1}}
   expect('{x*2}2',4);
@@ -327,7 +329,9 @@ process.stdout.write('\n');
   expect('c:C;d:c+2;Y{c!1};*d',3);
   expect('c:C;Y{c!1};**(c;)+5',6);
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
-  @!{var src='c:C;!c;*c';try{run(src,@{});srcErr(src,'does not cause an error');failures=1}catch(e){if(e!='Cannot take from a closed channel'){srcErr(src,'errors with "'+e+'"');failures=1}}}
+  @!{var src='c:C;!c;*c';
+    try{run(src,@{});srcErr(src,'does not cause an error');failures=1}
+    catch(e){if(e!='Cannot take from a closed channel'){srcErr(src,'errors with "'+e+'"');failures=1}}}
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
   expect('c:C;d:C;Y{c!5;c!9;!c};*c',5);
@@ -360,16 +364,23 @@ process.stdout.write('\n');
     ^^(x.children[0].text!="Hello, World")0;
     ^^1});
   @!{var src='$`div$"Hello"',c=0,d=0;
-    try{run.call({appendChild:@{d=1}},src,@{c=1})}catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    try{run.call({appendChild:@{d=1}},src,@{c=1})}
+    catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
     if(!c){srcErr(src,"does not return a result");failures=1;return}
     if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
     success()};
   @!{var src='$`div$"Hello";$`div$"Goodbye"',c=0,d=0;
-    try{run.call({appendChild:@{d++}},src,@{c=1})}catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    try{run.call({appendChild:@{d++}},src,@{c=1})}
+    catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
     if(!c){srcErr(src,"does not return a result");failures=1;return}
     if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
     if(d>1){srcErr(src,"calls appendChild more than once");failures;return}
     success()};
+  expect('.hi','hello',{data:{hi:'hello'}});
+  expect('+\\.nums',[5,15,30],{data:{nums:[5,10,15]}});
+  expect('.obj`a','b',{data:{obj:{a:'b'}}});
+  expect('`b(`a.obj)','c',{data:{obj:{a:{b:'c'}}}});
+  expect('1+.obj',[[2,3],[4,5]],{data:{obj:[[1,2],[3,4]]}});
 };
 process.stdout.write('\n');
 process.exit(failures);
