@@ -259,7 +259,7 @@ vdo=@{[R,f,a,b]
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
 concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
-reverse=@{[R,xs]var out=arrTseq([]);@(xs){[ys]^^(!ys)R(out);ys.first(@{[y]out.prepend(@{[zs]out=zs;ys.next(C)},y)})}}
+reverse=@{[R,xs]seqTarr(@{x.reverse();R(arrTseq(x))},xs)}
 take=@{[R,n,xs]
    n==0?R(xs)
   :n>0?@!{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}
