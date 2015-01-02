@@ -349,6 +349,15 @@ process.stdout.write('\n');
     ^^(x[2].children.length!=1)0;
     ^^(x[2].children[0].text!='6')0;
     ^^1});
+  expect('(`a;`dataX;{x})$`li$1 2 3',@{
+    ^^(x[0].properties['dataX']!=1)0;
+    ^^(x[1].properties['dataX']!=2)0;
+    ^^(x[2].properties['dataX']!=3)0;
+    ^^1});
+  expect('(`s;`fill;{x})$`li$("green";"blue")',@{
+    ^^(x[0].properties.style['fill']!="green")0;
+    ^^(x[1].properties.style['fill']!="blue")0;
+    ^^1});
   expect('`ul@`li$1 2 3',@{
     ^^(x.tagName!='ul')0;
     ^^(x.children.length!=3)0;

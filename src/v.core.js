@@ -148,7 +148,7 @@ module.exports=run=@{[src,R,opts]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show;
+var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -273,8 +273,11 @@ cons=@{[R,x,xs,ys]var s={
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
+assoc=@{[o,p,v]var x={},k;for(k in o)x[k]=o[k];x[p]=v;^^x}
 teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]switch(xs[0].v){
+  case 'a':^^func(xs[2])(@R(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children)),h._data);
+  case 's':^^func(xs[2])(@R(H(h.tagName,assoc(h.properties,"style",assoc(h.properties.style,xs[1].v,x)),h.children)),h._data);
   case 't':^^func(xs[1])(@R(H(h.tagName,h.properties,[String(x)])),h._data);
   default:error('Invalid selection configuration key `'+xs[0].v)}}
 show=@{[r,t]
