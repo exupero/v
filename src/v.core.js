@@ -138,7 +138,7 @@ module.exports=run=@{[src,R,opts]
   evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
   evall=@{[R,es,e]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,out)};eval(C,es[i++],e)}
   evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
-  evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+f);apply(R,f,x)},[f,x],e)}
+  evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+json(f));apply(R,f,x)},[f,x],e)}
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   apply=@{[R,f,a]
     ^^(a.t!='args')f.call(m,R,a);
@@ -153,7 +153,7 @@ ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
 symq=@x.t=='symbol';
-funq=ich('call');
+funq=ich('call','apply');
 arrq=@{^^x instanceof Array};
 seqq=ich('empty','next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
@@ -190,15 +190,18 @@ strTsym=@{var s={t:'symbol',v:x,
     mapq(a)?a.call(N,R,s)
    :domq(a)?R(H(s.v,{},[a]))
    :seqq(a)?seqTarr(@{R(H(s.v,{},x))},a)
-   :inval(json(s),a)}};^^s}
+   :inval(json(s),a)},
+  apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 arrTseq=@!{
-  var s=@{[xs]^^{
+  var s=@{[xs]var d={
     t:'seq',
     empty:s.empty,
     first:@{[R]R(xs[0])},
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
-    append:@{[R,x]R(arrTseq(xs.concat([x])))}}}
+    append:@{[R,x]R(arrTseq(xs.concat([x])))},
+    call:@{[_,R,n]R(xs[n])},
+    apply:@{[_,xs]d.call.apply(N,[N].concat(xs))}};^^d}
   s.empty=@s([])
   ^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
@@ -207,6 +210,7 @@ seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.nex
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={call:@{[_,R,k]get(R,k)},
+         apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
          get:get,
          assoc:@{[R,a]ps.append(@R(seqTdic(x,f)),a)},
          dissoc:@{[R]},
@@ -266,6 +270,8 @@ pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 rollPairs=@{[R,s]s.first(@{[x]s.next(@{[xs]xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)})})}
 cons=@{[R,x,xs,ys]var s={
   t:'seq',
+  call:@{[_,R,n]n==0?s.first(R):s.next(@{x.call(N,R,n-1)})},
+  apply:@{[_,xs]s.call.apply(N,[N].concat(xs))},
   empty:arrTseq.empty,
   first:@{[R]x(R)},
   next:@{[R]xs(@{[n]R(n||ys||N)})},
