@@ -1,4 +1,4 @@
-var H=require('virtual-dom/h'),CE=require('virtual-dom/create-element'),D=require('virtual-dom/diff'),P=require('virtual-dom/patch'),tokens,lex,isNum,isNumVec,isStr,isStrVec,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
+var VH=require('virtual-dom/h'),VS=require('virtual-dom/virtual-hyperscript/svg'),CE=require('virtual-dom/create-element'),D=require('virtual-dom/diff'),P=require('virtual-dom/patch'),tokens,lex,isNum,isNumVec,isStr,isStrVec,parse,expr,exprs,wraps,eof=-1,log=console.log,json=JSON.stringify,spy=@{y?log(x,y):log(x);^^x},error=@{throw x},bl=@x&1,pt,to=@typeof y==x,sl=@Array.prototype.slice.call(x,y),inval,invals,udf=void 0,N=null,id=@x;
 pt=@{[f]var xs=sl(A,1);^^@f.apply(N,xs.concat(sl(A)))}
 udfq=pt(to,'undefined');
 inval=@{[s,a]error("Invalid argument for "+s+": `"+json(a)+"`")}
@@ -155,7 +155,7 @@ module.exports=run=@{[src,R,opts]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn;
+var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -170,6 +170,8 @@ colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
 
+VHtVS=@{^^VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
+H=@{[t,p,c]^^t=='svg'?VS(t,p,c.map(VHtVS)):VH(t,p,c)}
 jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
    :objq(x)?objTdic(x)
@@ -194,9 +196,10 @@ mapC=@{[f]var cs=sl(A,1);^^{
   isOpen:@cs.every(@x.isOpen())}}
 strTsym=@{var s={t:'symbol',v:x,
   call:@{[_,R,a]
-    mapq(a)?a.call(N,R,s)
-   :domq(a)?R(H(s.v,{},[a]))
+    symq(a)?R(H(s.v,{},[H(a.v,{},[])]))
    :seqq(a)?seqTarr(@{R(H(s.v,{},x))},a)
+   :mapq(a)?a.call(N,R,s)
+   :domq(a)?R(H(s.v,{},[a]))
    :inval(json(s),a)},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 arrTseq=@{[xs]

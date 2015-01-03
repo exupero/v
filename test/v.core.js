@@ -400,6 +400,10 @@ process.stdout.write('\n');
     ^^(x.properties.width!=5)0;
     ^^(x.properties.height!=15)0;
     ^^1});
+  expect('`svg`rect',@{
+    ^^(x.tagName!='svg')0;
+    ^^(x.children[0].tagName!='rect')0;
+    ^^1});
   @!{var src='$`div$"Hello"',c=0,d=0;
     try{run.call({appendChild:@{d=1}},src,@{c=1})}
     catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
