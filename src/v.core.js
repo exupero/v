@@ -121,8 +121,8 @@ parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 module.exports=run=@{[src,R,opts]
-  var eval,evalss,evall,evals,evala,evalc,apply,assign,find,fs=[],sus=@fs.push(x),m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id,data=opts.data?jsTv(opts.data):objTdic({});
-  m={root:this};
+  var eval,evalss,evall,evals,evala,evalc,apply,assign,find,fs=[],m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id,data=opts.data?jsTv(opts.data):objTdic({});
+  m={root:this,suspend:@fs.push(x)};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.t)              ? R(tr)
      :tr.t=='assign'                    ? assign(R,e,tr.name)
@@ -140,7 +140,7 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='int'                       ? R(parseInt(tr.v))
      :tr.t=='float'                     ? R(parseFloat(tr.v))
      :tr.t=='string'                    ? R(tr.v)
-     :tr.t=='C'                         ? R(channel(sus))
+     :tr.t=='C'                         ? R(channel.call(m))
      :tr.t=='N'                         ? R(N)
      :tr.t=='Y'                         ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
      :ops[tr.t]                         ? R(ops[tr.t])
@@ -186,16 +186,16 @@ jsTv=@{
    :objq(x)?objTdic(x,1)
    :x}
 objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([{t:'symbol',v:k,p:'n'},y?jsTv(x[k]):x[k]]));^^seqTdic(arrTseq(s))}
-channel=@{[s]var c={
+channel=@{var m=this,c={
   put:@{[R,x]
     !c.open?error('Cannot put to a closed channel')
-   :c.values.length>0?s(@c.put(R,x))
+   :c.values.length>0?m.suspend(@c.put(R,x))
    :@!{c.values.push(x);R(c)}},
   close:@{c.open=0},
   take:@{[R]
     !c.open?error('Cannot take from a closed channel')
    :c.values.length>0?R(c.values.shift())
-   :s(@c.take(R))},
+   :m.suspend(@c.take(R))},
   isOpen:@c.open,
   open:1,values:[]};^^c}
 mapC=@{[f]var cs=sl(A,1);^^{
