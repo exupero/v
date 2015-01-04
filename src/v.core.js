@@ -77,6 +77,8 @@ expr=@{[ts]
     :isStr(x)&&isStr(y)    ? {t:'vector',p:'n',values:[x,y]}
     :isStrVec(x)&&isStr(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
     :x.t=='word'&&y.t==':' ? {t:'assign',p:'n',name:x.v}
+    :x.t=='.'&&y.t==':'    ? {t:'assign',p:'n',name:'.'}
+    :x.t=='data'&&y.t==':' ? {t:'assign',p:'n',name:'.'+x.v}
     :x.t=='.'&&y.t=='word' ? {t:'data',p:'n',v:y.v}
     :x.p=='n'&&y.p=='n'    ? {t:'apply',p:'n',func:x,arg:y}
     :x.p=='n'&&y.p=='v'    ? {t:'curry',p:'v',func:y,arg:x}
@@ -118,11 +120,11 @@ parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 module.exports=run=@{[src,R,opts]
-  var eval,evalss,evall,evals,evala,evalc,apply,find,fs=[],sus=@fs.push(x),m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id;
+  var eval,evalss,evall,evals,evala,evalc,apply,assign,find,fs=[],sus=@fs.push(x),m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id,data=opts.data?jsTv(opts.data):objTdic({});
   m={root:this};
   eval=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.t)              ? R(tr)
-     :tr.t=='assign'                    ? R(@{[R,x]eval(@{e[e.length-1][tr.name]=x;R(x)},x,e)})
+     :tr.t=='assign'                    ? assign(R,e,tr.name)
      :tr.t=='apply'||tr.t=='applyMonad' ? (tr.func.t==':'&&tr.arg.t=='args'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
      :tr.t=='compose'                   ? evall(@{[f,g]R(@{[R,a,b]g(@{f(R,x)},a,b)})},[tr.f,tr.g],e)
      :tr.t=='curry'                     ? evall(@{[f,x]R(@{[R,y]f.call(m,R,x,y)})},[tr.func,tr.arg],e)
@@ -132,7 +134,7 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='vector'                    ? evals(R,tr.values,e)
      :tr.t=='list'                      ? evals(R,tr.values,e)
      :tr.t=='word'                      ? eval(R,find(tr.v,e),N)
-     :tr.t=='data'                      ? R(jsTv(opts.data[tr.v]))
+     :tr.t=='data'                      ? data.get(R,strTsym(tr.v))
      :symq(tr)                          ? R(strTsym(tr.v))
      :tr.t=='int'                       ? R(parseInt(tr.v))
      :tr.t=='float'                     ? R(parseFloat(tr.v))
@@ -155,6 +157,9 @@ module.exports=run=@{[src,R,opts]
     var udfd=a.values.filter(udfq);
     ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{t:'args',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
+  assign=@{[R,e,n]^^R(@{[R,x]eval(@{
+    if(n[0]=='.'){n=n.slice(1);if(n.length>0)data.assoc(@{[d]data=d;R(x)},arrTseq([strTsym(n),x]));else{data=x;R(x)}}
+    else{e[e.length-1][n]=x;R(x)}},x,e)})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
 
@@ -207,7 +212,7 @@ strTsym=@{var s={t:'symbol',v:x,
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 arrTseq=@{[xs]
   var s={
-    t:'seq',
+    type:'seq',
     first:@{[R]R(xs[0])},
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
@@ -279,7 +284,7 @@ drop=@{[R,n,xs]
 pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 rollPairs=@{[R,s]s.first(@{[x]s.next(@{[xs]xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)})})}
 cons=@{[R,x,xs,ys]var s={
-  t:'seq',
+  type:'seq',
   call:@{[_,R,n]n==0?s.first(R):s.next(@{x.call(N,R,n-1)})},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))},
   first:@{[R]x(R)},

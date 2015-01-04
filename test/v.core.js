@@ -203,6 +203,8 @@ process.stdout.write('\n');
   expect('`"hello world"',[{t:'symbol',v:'hello world',p:'n'}]);
   expect('.data',[{t:'data',p:'n',v:'data'}]);
   expect('`a.obj',[{t:'apply',p:'n',func:{t:'symbol',v:'a',p:'n'},arg:{t:'data',p:'n',v:'obj'}}]);
+  expect('.:N',[{t:'apply',p:'n',func:{t:'assign',p:'n',name:'.'},arg:{t:'N',v:'N',p:'n'}}]);
+  expect('.nil:N',[{t:'apply',p:'n',func:{t:'assign',p:'n',name:'.nil'},arg:{t:'N',v:'N',p:'n'}}]);
 };
 
 @!{
@@ -443,6 +445,8 @@ process.stdout.write('\n');
   expect('.obj`a','b',{data:{obj:{a:'b'}}});
   expect('`b(`a.obj)','c',{data:{obj:{a:{b:'c'}}}});
   expect('1+.obj',[[2,3],[4,5]],{data:{obj:[[1,2],[3,4]]}});
+  expect('.:D((`nums;1 2 3););+/.nums',6);
+  expect('.nums:1 2 3;+/.nums',6);
 };
 process.stdout.write('\n');
 process.exit(failures);
