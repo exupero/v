@@ -239,7 +239,6 @@ seqTdic=@{[ps,f]
          keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
          values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
   ^^d}
-func=@funq(x)?x:@{[R]R(x)}
 
 firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
 nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
@@ -294,15 +293,17 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 assoc=@{[o,p,v]var x={},k;for(k in o)x[k]=o[k];x[p]=v;^^x}
 assocIn=@{[o,ps,v]^^ps.length==1?assoc(o,ps[0],v):assoc(o,ps[0],assocIn(o,ps.slice(1),v))}
-teq=@x==y||Math.abs(x-y)<1e-10
 config=@{[R,h,xs]var r=@{var x=assoc(x,'_data',h._data);R(y.length>0?config(R,x,[xs[0]].concat(y)):x)};switch(xs[0].v){
-  case 'a':^^func(xs[2])(@r(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children),xs.slice(3)),h._data);
-  case 's':^^func(xs[2])(@r(H(h.tagName,assocIn(h.properties,["style",xs[1].v],x),h.children),xs.slice(3)),h._data);
-  case 't':^^func(xs[1])(@r(H(h.tagName,h.properties,[String(x)]),[]),h._data);
+  case 'a':^^func(xs[2])(@r(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children),xs.slice(3)),h._data,h._index);
+  case 's':^^func(xs[2])(@r(H(h.tagName,assocIn(h.properties,["style",xs[1].v],x),h.children),xs.slice(3)),h._data,h._index);
+  case 't':^^func(xs[1])(@r(H(h.tagName,h.properties,[String(x)]),[]),h._data,h._index);
   default:error('Invalid selection configuration key `'+xs[0].v)}}
 show=@{[r,t]
   if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t),r._tree=t)}
   else{r._node=n=CE(t);r._tree=t;r.appendChild(n)}}
+
+func=@funq(x)?x:@{[R]R(x)}
+teq=@x==y||Math.abs(x-y)<1e-10
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 defaultOps={
@@ -386,7 +387,7 @@ defaultOps={
      :inval('$',a)},
     @{[R,a,b]
       symq(a)&&symq(b)?R(H(a.v,{},[H(b.v,{},[])]))
-     :symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x;R(h)},b)
+     :symq(a)&&seqq(b)?@!{var i=0;map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x,h._index=i++;R(h)},b)}
      :symq(a)&&strq(b)?R(H(a.v,{},[String(b)]))
      :seqq(a)&&symq(b)?seqTarr(@{[xs]config(R,H(b.v,{},[]),xs)},a)
      :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)

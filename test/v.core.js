@@ -377,6 +377,11 @@ process.stdout.write('\n');
     ^^(x[2].properties.width!=3)0;
     ^^(x[2].properties.height!=6)0;
     ^^1});
+  expect('(`a;`width;{y})$`rect$1 2 3',@{
+    ^^(x[0].properties.width!=0)0;
+    ^^(x[1].properties.width!=1)0;
+    ^^(x[2].properties.width!=2)0;
+    ^^1});
   expect('`ul@`li$1 2 3',@{
     ^^(x.tagName!='ul')0;
     ^^(x.children.length!=3)0;
