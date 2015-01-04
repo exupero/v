@@ -35,12 +35,12 @@ lex=@{[input]
         case '/':t.nextChar()==':'?e('/:','a'):@!{t.backup();e('/','a')};break;
         case '\\':t.nextChar()==':'?e('\\:','a'):@!{t.backup();e('\\','a')};break;
         case '\'':t.nextChar()==':'?e("':",'a'):@!{t.backup();e("'",'a')};break;
-        case 'C':e('channel','n');break;
-        case 'D':e('dict','v');break;
-        case 'L':e('lazy','v');break;
-        case 'N':e('nil','n');break;
-        case 'Y':e('fork','v');break;
         case '\n':e(';');break;
+        case 'C':e('C','n');break;
+        case 'D':e('D','v');break;
+        case 'L':e('L','v');break;
+        case 'N':e('N','n');break;
+        case 'Y':e('Y','v');break;
         default:t.backup();^^t.accept(digits)?number:@{[t]t.until(stop);t.emit('word','n');^^init}}}}
   symbol=@{[t]t.until(stop);t.emit('symbol','n');^^init}
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','n')}else t.emit('int','n');^^init}
@@ -130,8 +130,6 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='func'                      ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.t=='args'                      ? evall(@{R({t:'args',values:sl(A)})},tr.args,e)
      :tr.t=='vector'                    ? evals(R,tr.values,e)
-     :tr.t=='channel'                   ? R(channel(sus))
-     :tr.t=='fork'                      ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
      :tr.t=='list'                      ? evals(R,tr.values,e)
      :tr.t=='word'                      ? eval(R,find(tr.v,e),N)
      :tr.t=='data'                      ? R(jsTv(opts.data[tr.v]))
@@ -139,7 +137,9 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='int'                       ? R(parseInt(tr.v))
      :tr.t=='float'                     ? R(parseFloat(tr.v))
      :tr.t=='string'                    ? R(tr.v)
-     :tr.t=='nil'                       ? R(N)
+     :tr.t=='C'                         ? R(channel(sus))
+     :tr.t=='N'                         ? R(N)
+     :tr.t=='Y'                         ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
      :ops[tr.t]                         ? R(ops[tr.t])
      :error('Invalid AST: '+json(tr))}
   evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
@@ -388,8 +388,8 @@ defaultOps={
      :domq(a)&&symq(b)?R(H(a.tagName,a.properties,a.children.concat([H(b.v,{},[])])))
      :domq(a)&&seqq(b)?seqTarr(@{R(H(a.tagName,a.properties,a.children.concat(x)))},b)
      :invals('$',a,b)}),
-  dict:arit(@{[R,a]R(seqTdic(a))}),
-  lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
+  D:arit(@{[R,a]R(seqTdic(a))}),
+  L:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
   "':":aarit(@{[R,f,a]rollPairs(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
   '/:':aarit(
