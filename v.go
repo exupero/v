@@ -8,12 +8,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/toqueteos/webbrowser"
 )
 
 var port = flag.Int("p", 8000, "Port")
 var indexTemplate = `<!DOCTYPE html><body>
+<script type="text/javascript">window.send=function(s){var req=new XMLHttpRequest();req.open('POST','/update',true);req.send(s)}</script>
 <script type="text/v">{{.src}}</script>
 <script type="text/javascript">window.vdata = {{.data}};</script>
 <script type="text/javascript">{{.v}}</script>
@@ -44,8 +46,23 @@ func main() {
 		if err := indexPage.Execute(w, data); err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
 	})
 
+	http.HandleFunc("/update", func(w http.ResponseWriter, req *http.Request) {
+		b, err := ioutil.ReadAll(req.Body)
+		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
+		src = string(b)
+	})
+
 	go func(){
 		webbrowser.Open(url)
+	}()
+
+	go func(){
+		c := make(chan os.Signal)
+		signal.Notify(c, os.Interrupt)
+		for _ = range c {
+			fmt.Printf("\n%s\n",src)
+			os.Exit(0)
+		}
 	}()
 
 	if err := http.ListenAndServe(url, nil); err != nil {
