@@ -447,6 +447,7 @@ process.stdout.write('\n');
   expect('1+.obj',[[2,3],[4,5]],{data:{obj:[[1,2],[3,4]]}});
   expect('.:D((`nums;1 2 3););+/.nums',6);
   expect('.nums:1 2 3;+/.nums',6);
+  expect('req`scales',5,{env:{req:@{[R,n]n.v=='scales'?R(5):R(-1)}}});
 };
 process.stdout.write('\n');
 process.exit(failures);

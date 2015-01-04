@@ -161,7 +161,7 @@ module.exports=run=@{[src,R,opts]
     if(n[0]=='.'){n=n.slice(1);if(n.length>0)data.assoc(@{[d]data=d;R(x)},arrTseq([strTsym(n),x]));else{data=x;R(x)}}
     else{e[e.length-1][n]=x;R(x)}},x,e)})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
-  evalss(R,parse(src.trim()),[{}]);while(fs.length>0)fs.shift()()}
+  evalss(R,parse(src.trim()),[opts.env||{}]);while(fs.length>0)fs.shift()()}
 
 var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
