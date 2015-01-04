@@ -417,4 +417,5 @@ defaultOps={
     a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 }
 
+run.jsTv=jsTv;
 run.objTdic=objTdic;

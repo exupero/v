@@ -1,6 +1,7 @@
 var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i,data,libs,req;
 libs={
   time:require('../lib/time'),
+  ajax:require('../lib/ajax'),
 };
 req=@{[R,n]var lib=libs[n.v];
   if(!lib)throw "No such library '"+n.v+"'";
