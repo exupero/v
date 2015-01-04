@@ -404,6 +404,20 @@ process.stdout.write('\n');
     ^^(x.tagName!='svg')0;
     ^^(x.children[0].tagName!='rect')0;
     ^^1});
+  expect('(`svg$`rect)$`circle',@{
+    ^^(x.tagName!='svg')0;
+    ^^(x.children.length!=2)0;
+    ^^(x.children[0].tagName!='rect')0;
+    ^^(x.children[1].tagName!='circle')0;
+    ^^1});
+  expect('(`svg$`rect)$`circle$1 2 3',@{
+    ^^(x.tagName!='svg')0;
+    ^^(x.children.length!=4)0;
+    ^^(x.children[0].tagName!='rect')0;
+    ^^(x.children[1].tagName!='circle')0;
+    ^^(x.children[2].tagName!='circle')0;
+    ^^(x.children[3].tagName!='circle')0;
+    ^^1});
   @!{var src='$`div$"Hello"',c=0,d=0;
     try{run.call({appendChild:@{d=1}},src,@{c=1})}
     catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}

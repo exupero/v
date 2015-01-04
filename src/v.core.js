@@ -145,7 +145,10 @@ module.exports=run=@{[src,R,opts]
   evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
   evall=@{[R,es,e]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,out)};eval(C,es[i++],e)}
   evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
-  evala=@{[R,e,f,x]evall(@{[f,x]^^(!funq(f))error('Not callable: '+json(f));apply(R,f,x)},[f,x],e)}
+  evala=@{[R,e,f,x]evall(@{[f,x]
+    domq(f)&&symq(x) ? R(H(f.tagName,f.properties,f.children.concat([H(x.v,{},[])])))
+   :funq(f)          ? apply(R,f,x)
+   :error('Not callable: '+json(f))},[f,x],e)}
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   apply=@{[R,f,a]
     ^^(a.t!='args')f.call(m,R,a);
@@ -376,11 +379,14 @@ defaultOps={
      :domq(a)?@!{show(m.root,a);R(a)}
      :inval('$',a)},
     @{[R,a,b]
-      symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x;R(h)},b)
+      symq(a)&&symq(b)?R(H(a.v,{},[H(b.v,{},[])]))
+     :symq(a)&&seqq(b)?map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x;R(h)},b)
      :symq(a)&&strq(b)?R(H(a.v,{},[String(b)]))
      :seqq(a)&&symq(b)?seqTarr(@{[xs]config(R,H(b.v,{},[]),xs)},a)
      :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
      :seqq(a)&&domq(b)?seqTarr(@{[xs]config(R,b,xs)},a)
+     :domq(a)&&symq(b)?R(H(a.tagName,a.properties,a.children.concat([H(b.v,{},[])])))
+     :domq(a)&&seqq(b)?seqTarr(@{R(H(a.tagName,a.properties,a.children.concat(x)))},b)
      :invals('$',a,b)}),
   dict:arit(@{[R,a]R(seqTdic(a))}),
   lazy:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
