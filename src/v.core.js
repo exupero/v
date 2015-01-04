@@ -176,16 +176,16 @@ mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','isOpen');
 colq=@seqq(x)||mapq(x)||chaq(x);
-domq=@x.type=='VirtualNode';
+domq=@x&&x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
 
 VHtVS=@{^^udfq(x)?x:VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
 H=@{[t,p,c]^^t=='svg'?VS(t,p,c.map(VHtVS)):VH(t,p,c)}
 jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
-   :objq(x)?objTdic(x)
+   :objq(x)?objTdic(x,1)
    :x}
-objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([{t:'symbol',v:k,p:'n'},jsTv(x[k])]));^^seqTdic(arrTseq(s))}
+objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([{t:'symbol',v:k,p:'n'},y?jsTv(x[k]):x[k]]));^^seqTdic(arrTseq(s))}
 channel=@{[s]var c={
   put:@{[R,x]
     !c.open?error('Cannot put to a closed channel')
@@ -416,3 +416,5 @@ defaultOps={
     var C=@{[R,x,xs]xs?xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)}):R(N)};
     a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
 }
+
+run.objTdic=objTdic;
