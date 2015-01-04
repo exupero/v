@@ -9,15 +9,19 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/toqueteos/webbrowser"
 )
 
 var port = flag.Int("p", 8000, "Port")
 var indexTemplate = `<!DOCTYPE html><body>
-<script type="text/javascript">window.send=function(s){var req=new XMLHttpRequest();req.open('POST','/update',true);req.send(s)}</script>
+<script type="text/json">{{.data}}</script>
 <script type="text/v">{{.src}}</script>
-<script type="text/javascript">window.vdata = {{.data}};</script>
+<script type="text/javascript">
+	window.sendData=function(d){var req=new XMLHttpRequest();req.open('POST','/updateData',true);req.send(d)}
+	window.sendSrc=function(s){var req=new XMLHttpRequest();req.open('POST','/updateSource',true);req.send(s)}
+</script>
 <script type="text/javascript">{{.v}}</script>
 </body>`
 
@@ -46,10 +50,16 @@ func main() {
 		if err := indexPage.Execute(w, data); err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
 	})
 
-	http.HandleFunc("/update", func(w http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/updateSource", func(w http.ResponseWriter, req *http.Request) {
 		b, err := ioutil.ReadAll(req.Body)
 		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
 		src = string(b)
+	})
+
+	http.HandleFunc("/updateData", func(w http.ResponseWriter, req *http.Request) {
+		b, err := ioutil.ReadAll(req.Body)
+		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
+		data = string(b)
 	})
 
 	go func(){
@@ -60,7 +70,7 @@ func main() {
 		c := make(chan os.Signal)
 		signal.Notify(c, os.Interrupt)
 		for _ = range c {
-			fmt.Printf("\n%s\n",src)
+			fmt.Printf("{\"data\":%s,\"source\":\"%s\"}\n",data,strings.Replace(src,"\"","\\\"",-1))
 			os.Exit(0)
 		}
 	}()

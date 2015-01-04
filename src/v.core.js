@@ -173,7 +173,7 @@ colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
 
-VHtVS=@{^^VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
+VHtVS=@{^^udfq(x)?x:VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
 H=@{[t,p,c]^^t=='svg'?VS(t,p,c.map(VHtVS)):VH(t,p,c)}
 jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
@@ -295,7 +295,7 @@ config=@{[R,h,xs]var r=@{var x=assoc(x,'_data',h._data);R(y.length>0?config(R,x,
   case 't':^^func(xs[1])(@r(H(h.tagName,h.properties,[String(x)]),[]),h._data);
   default:error('Invalid selection configuration key `'+xs[0].v)}}
 show=@{[r,t]
-  if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t))}
+  if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t),r._tree=t)}
   else{r._node=n=CE(t);r._tree=t;r.appendChild(n)}}
 
 var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
