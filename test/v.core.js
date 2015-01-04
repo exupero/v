@@ -336,7 +336,7 @@ process.stdout.write('\n');
   expect('c:C;d:C;Y{c!1};Y{d!2};*c+d',3);
   @!{var src='c:C;!c;*c';
     try{run(src,@{});srcErr(src,'does not cause an error');failures=1}
-    catch(e){if(e!='Cannot take from a closed channel'){srcErr(src,'errors with "'+e+'"');failures=1}}}
+    catch(e){if(e!='Cannot take from a closed channel'){srcErr(src,'errors with "'+e+'"');failures=1;^^}success()}}
   expect('c:C;#c',1);
   expect('c:C;!c;#c',0);
   expect('c:C;d:C;Y{c!5;c!9;!c};*c',5);
@@ -448,6 +448,9 @@ process.stdout.write('\n');
   expect('.:D((`nums;1 2 3););+/.nums',6);
   expect('.nums:1 2 3;+/.nums',6);
   expect('req`scales',5,{env:{req:@{[R,n]n.v=='scales'?R(5):R(-1)}}});
+  @!{var src='$(`t;"';
+    try{run(src,@{});srcErr(src,'does not cause an error');failures=1}
+    catch(e){if(e!='Unmatched "'){srcErr(src,'errors with "'+e+'"');failures=1}success()}}
 };
 process.stdout.write('\n');
 process.exit(failures);

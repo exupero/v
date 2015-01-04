@@ -46,7 +46,8 @@ lex=@{[input]
   number=@{[t]t.acceptRun(digits);if(t.accept('.')){t.acceptRun(digits);t.emit('float','n')}else t.emit('int','n');^^init}
   string=@{[ty]^^@{[t]
     t.until('"\\');
-    if(t.peek()=='"'){t.emit(ty,'n',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
+    if(t.peek()==eof)error('Unmatched "');
+    else if(t.peek()=='"'){t.emit(ty,'n',@{^^x.replace('\\"','"')});t.accept('"');t.ignore();^^init}
     else{t.accept('\\');t.accept('"');^^string(ty)}}}
   space=@{[t]if(t.acceptSeq('NB. '))t.until('\n');t.ignore();^^init}
   ^^tokens(input,init)}
@@ -102,7 +103,7 @@ exprs=@{[ts]
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
 wraps=@{[ts]
-  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].t==ty){ts.splice(i,j-i+1,f(ts.slice(i+1,j)));^^}unmatched(t.t)};
+  var i=ts.length-1,t,find=@{[ty,f]for(var j=i;j<ts.length;j++)if(ts[j].t==ty){ts.splice(i,j-i+1,f(ts.slice(i+1,j)));^^}error('Unmatched '+t.t)};
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
     if(t.t=='(')find(')',@{var x=exprs(x);^^x.length==1?x[0]:{t:'list',p:'n',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
