@@ -19,6 +19,7 @@ var indexTemplate = `<!DOCTYPE html><body>
 <script type="text/json">{{.data}}</script>
 <script type="text/v">{{.src}}</script>
 <script type="text/javascript">
+	window.vAllowEditing=false;
 	window.sendData=function(d){var req=new XMLHttpRequest();req.open('POST','/updateData',true);req.send(d)}
 	window.sendSrc=function(s){var req=new XMLHttpRequest();req.open('POST','/updateSource',true);req.send(s)}
 </script>

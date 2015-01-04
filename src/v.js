@@ -18,6 +18,8 @@ for(i=0;i<ss.length;i++){var s=ss[i];
             if(d!=lData&&window.sendData)window.sendData(d);
             lSrc=src,lData=d},0)};
     p.replaceChild(el,s);
-    var t=document.createElement('textarea');p.appendChild(t);t.value=src,t.style='width:100%;height:300px;';
-    var d=document.createElement('textarea');p.appendChild(d);d.value=lData,d.style='width:100%;height:300px;';
-    t.onkeyup=d.onkeyup=@{r(t.value,d.value)};r(src,JSON.stringify(JSON.parse(data||'{}'),null,'  '))}}
+    if(window.vAllowEditing){
+      var t=document.createElement('textarea');p.appendChild(t);t.value=src,t.style='width:100%;height:300px;';
+      var d=document.createElement('textarea');p.appendChild(d);d.value=lData,d.style='width:100%;height:300px;';
+      t.onkeyup=d.onkeyup=@{r(t.value,d.value)}}
+    r(src,JSON.stringify(JSON.parse(data||'{}'),null,'  '))}}
