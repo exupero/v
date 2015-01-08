@@ -162,7 +162,7 @@ module.exports=run=@{[src,R,opts]
     if(n[0]=='.'){n=n.slice(1);if(n.length>0)data.assoc(@{[d]data=d;R(x)},arrTseq([strTsym(n),x]));else{data=x;R(x)}}
     else{e[e.length-1][n]=x;R(x)}},x,e)})}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
-  evalss(R,parse(src.trim()),[opts.env||{}]);while(fs.length>0)fs.shift()()}
+  evalss(R,parse(src.trim()).filter(@{^^!udfq(x)}),[opts.env||{}]);while(fs.length>0)fs.shift()()}
 
 var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
@@ -179,7 +179,7 @@ colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x&&x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
 
-VHtVS=@{^^udfq(x)?x:VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
+VHtVS=@{^^VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.children.map(VHtVS))}
 H=@{[t,p,c]^^t=='svg'?VS(t,p,c.map(VHtVS)):VH(t,p,c)}
 jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
@@ -225,7 +225,8 @@ map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{
 seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
-      d={call:@{[_,R,k]get(R,k)},
+      d={type:'dic',
+         call:@{[_,R,k]get(R,k)},
          apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
          get:get,
          assoc:@{[R,a]ps.append(@R(seqTdic(x,f)),a)},
@@ -293,7 +294,7 @@ cons=@{[R,x,xs,ys]var s={
   append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))}};R(s)}
 assoc=@{[o,p,v]var x={},k;for(k in o)x[k]=o[k];x[p]=v;^^x}
 assocIn=@{[o,ps,v]^^ps.length==1?assoc(o,ps[0],v):assoc(o,ps[0],assocIn(o,ps.slice(1),v))}
-config=@{[R,h,xs]var r=@{var x=assoc(x,'_data',h._data);R(y.length>0?config(R,x,[xs[0]].concat(y)):x)};switch(xs[0].v){
+config=@{[R,h,xs]var r=@{var x=assoc(x,'_data',h._data);y.length>0?config(R,x,[xs[0]].concat(y)):R(x)};switch(xs[0].v){
   case 'a':^^func(xs[2])(@r(H(h.tagName,assoc(h.properties,xs[1].v,x),h.children),xs.slice(3)),h._data,h._index);
   case 's':^^func(xs[2])(@r(H(h.tagName,assocIn(h.properties,["style",xs[1].v],x),h.children),xs.slice(3)),h._data,h._index);
   case 't':^^func(xs[1])(@r(H(h.tagName,h.properties,[String(x)]),[]),h._data,h._index);
@@ -341,7 +342,8 @@ defaultOps={
     @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
   '#':arit(
     @{[R,a]
-      seqq(a)?count(R,a)
+      strq(a)?R(a.length)
+     :seqq(a)?count(R,a)
      :chaq(a)?R(a.isOpen())
      :inval('#',a)},
     @{[R,a,b]
@@ -381,7 +383,6 @@ defaultOps={
   '$':arit(
     @{[R,a]var m=this;
       numq(a)?R(''+a)
-     :seqq(a)?seqTarr(R,a)
      :symq(a)?@!{var h=H(a.v,{},[]);show(m.root,h);R(h)}
      :domq(a)?@!{show(m.root,a);R(a)}
      :inval('$',a)},

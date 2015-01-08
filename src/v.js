@@ -1,4 +1,4 @@
-var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i,data,libs,req;
+var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i=0,data,libs,req;
 libs={
   time:require('../lib/time'),
   ajax:require('../lib/ajax'),
@@ -6,20 +6,27 @@ libs={
 req=@{[R,n]var lib=libs[n.v];
   if(!lib)throw "No such library '"+n.v+"'";
   else if(typeof lib=='function')R(v.objTdic(lib(v,req)));
-  else throw "Invalid library '"+n.v+"'"}
-for(i=0;i<ss.length;i++){var s=ss[i];
-  if(s.type=='text/json')data=s.childNodes[0].data;
+  else throw "Invalid library '"+n.v+"'"};
+@(){if(i==ss.length)^^;var s=ss[i++];
+  if(s.type=='text/json'){
+    if(s.childNodes.length>0){data=s.childNodes[0].data;C()}
+    else if(s.src.length&&s.src.length>0){
+      var r=new XMLHttpRequest();
+      r.onreadystatechange=function(){if(r.readyState==4&&r.status==200){data=r.responseText;C()}};
+      r.open('GET',s.src,true);r.send()}}
   else if(s.type=='text/v'){
-    var src=s.childNodes[0].data,el=document.createElement('div'),p=s.parentNode,lSrc=null,lData=null;
+    var src=s.childNodes[0].data,el=document.createElement('div'),p=s.parentNode,lSrc=null,lData=null,nData=JSON.stringify(JSON.parse(data||'{}'),null,'  '),res;
         r=@{[src,d]var da,err=0;try{da=JSON.parse(d||'{}')}catch(e){err=1};if(err)^^;
-          if(src!=lSrc||d!=lData)v.call(el,src,@{console.log(x)},{data:da,env:{req:req}});
+          if(src!=lSrc||d!=lData)v.call(el,src,@{console.log(x);if(res)res.innerHTML=!x?''+x:x.type=='VirtualNode'?'':JSON.stringify(x,null,'  ')},{data:da,env:{req:req}});
           setTimeout(@{
             if(src!=lSrc&&window.sendSrc)window.sendSrc(src);
             if(d!=lData&&window.sendData)window.sendData(d);
             lSrc=src,lData=d},0)};
     p.replaceChild(el,s);
     if(window.vAllowEditing){
-      var t=document.createElement('textarea');p.appendChild(t);t.value=src,t.style='width:100%;height:300px;';
-      var d=document.createElement('textarea');p.appendChild(d);d.value=lData,d.style='width:100%;height:300px;';
+      var d,t,next=el.nextSibling,style=@{x.width='100%',x.height='300px',x.fontFamily='monospace'};
+      res=document.createElement('div');p.insertBefore(res,next);res.style.width='100%',res.style.fontFamily='monospace';
+      t=document.createElement('textarea');p.insertBefore(t,next);t.value=src.trim();style(t.style);
+      d=document.createElement('textarea');p.insertBefore(d,next);d.value=nData,style(d.style);
       t.onkeyup=d.onkeyup=@{r(t.value,d.value)}}
-    r(src,JSON.stringify(JSON.parse(data||'{}'),null,'  '))}}
+    r(src,nData);C()}}
