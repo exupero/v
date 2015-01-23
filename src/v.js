@@ -1,7 +1,8 @@
 var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i=0,data,libs,req;
 libs={
-  time:require('../lib/time'),
   ajax:require('../lib/ajax'),
+  scale:require('../lib/scale'),
+  time:require('../lib/time'),
 };
 req=@{[R,n]var lib=libs[n.v];
   if(!lib)throw "No such library '"+n.v+"'";
@@ -15,9 +16,14 @@ req=@{[R,n]var lib=libs[n.v];
       r.onreadystatechange=function(){if(r.readyState==4&&r.status==200){data=r.responseText;C()}};
       r.open('GET',s.src,true);r.send()}}
   else if(s.type=='text/v'){
-    var src=s.childNodes[0].data,el=document.createElement('div'),p=s.parentNode,lSrc=null,lData=null,nData=JSON.stringify(JSON.parse(data||'{}'),null,'  '),res;
+    var src=s.childNodes[0].data,el=document.createElement('div'),p=s.parentNode,lSrc=null,lData=null,nData=JSON.stringify(JSON.parse(data||'{}'),null,'  '),res,
+        show=@{[R,x]
+          !x                    ? R(''+x)
+         :x.type=='VirtualNode' ? R('')
+         :x.show                ? x.show(R)
+         :R(JSON.stringify(x,null,'  '))},
         r=@{[src,d]var da,err=0;try{da=JSON.parse(d||'{}')}catch(e){err=1};if(err)^^;
-          if(src!=lSrc||d!=lData)v.call(el,src,@{console.log(x);if(res)res.innerHTML=!x?''+x:x.type=='VirtualNode'?'':JSON.stringify(x,null,'  ')},{data:da,env:{req:req}});
+          if(src!=lSrc||d!=lData)v.call(el,src,@{console.log(x);if(res)show(@{res.innerHTML=x},x)},{data:da,env:{req:req}});
           setTimeout(@{
             if(src!=lSrc&&window.sendSrc)window.sendSrc(src);
             if(d!=lData&&window.sendData)window.sendData(d);

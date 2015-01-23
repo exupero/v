@@ -185,7 +185,7 @@ jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
    :objq(x)?objTdic(x,1)
    :x}
-objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([{t:'symbol',v:k,p:'n'},y?jsTv(x[k]):x[k]]));^^seqTdic(arrTseq(s))}
+objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([strTsym(k),y?jsTv(x[k]):x[k]]));^^seqTdic(arrTseq(s))}
 channel=@{var m=this,c={
   put:@{[R,x]
     !c.open?error('Cannot put to a closed channel')
@@ -204,6 +204,7 @@ mapC=@{[f]var cs=sl(A,1);^^{
   take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},
   isOpen:@cs.every(@x.isOpen())}}
 strTsym=@{var s={t:'symbol',v:x,
+  show:@{[R]R('`'+x)},
   call:@{[_,R,a]
     symq(a)?R(H(s.v,{},[H(a.v,{},[])]))
    :seqq(a)?seqTarr(@{R(H(s.v,{},x))},a)
@@ -214,6 +215,7 @@ strTsym=@{var s={t:'symbol',v:x,
 arrTseq=@{[xs]
   var s={
     type:'seq',
+    show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
     first:@{[R]R(xs[0])},
     next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
     prepend:@{[R,x]R(arrTseq([x].concat(xs)))},
@@ -226,6 +228,7 @@ seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.nex
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={type:'dic',
+         show:@{[R]ps.show(@R('D'+x))},
          call:@{[_,R,k]get(R,k)},
          apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
          get:get,
@@ -286,6 +289,7 @@ pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
 rollPairs=@{[R,s]s.first(@{[x]s.next(@{[xs]xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)})})}
 cons=@{[R,x,xs,ys]var s={
   type:'seq',
+  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
   call:@{[_,R,n]n==0?s.first(R):s.next(@{x.call(N,R,n-1)})},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))},
   first:@{[R]x(R)},
@@ -419,4 +423,4 @@ defaultOps={
 }
 
 run.jsTv=jsTv;
-run.objTdic=objTdic;
+run.atomic=atomic;
