@@ -210,13 +210,16 @@ process.stdout.write('\n');
 @!{
   var ar=@{[R,v]seqq(v)?@!{var a=[];@(v){[xs]xs?xs.first(@{ar(@{[xr]a.push(xr);xs.next(C)},x)}):R(a)}}:R(v)},
       srcErr=@{err('`'+x+'` '+y)},
-      expect=@{[src,x,opts]
-        var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]c=2
-          if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
-          else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
-          success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}},opts)}
-        try{go()}catch(e){err(e)}
-        if(c==0){srcErr(src,'does not return a result');failures=1}};
+      expect=@!{
+        var trace=0,O=@{[src,x,opts]
+          var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]c=2
+            if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
+            else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
+            success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}},opts)}
+          if(trace)go();else try{go()}catch(e){err(e)}
+          if(c==0){srcErr(src,'does not return a result');failures=1}};
+        O.trace=@{trace=1;O.apply(N,A)};
+        ^^O};
   expect('{x*2}2',4);
   expect('1 2 3',[1,2,3]);
   expect('"a" "b" "c"',['a','b','c']);
@@ -457,6 +460,8 @@ process.stdout.write('\n');
     try{run(src,@{});srcErr(src,'does not cause an error');failures=1}
     catch(e){if(e!='Unmatched "'){srcErr(src,'errors with "'+e+'"');failures=1}success()}};
   expect('5\n NB. Comment',5);
+  expect.trace('&1 2 3 4',[0,1,1,2,2,2,3,3,3,3]);
+  expect('`key\'.data[&{"b"=x@`key}\'.data]',['b'],{data:{data:[{key:'a'},{key:'b'},{key:'c'}]}});
 };
 process.stdout.write('\n');
 process.exit(failures);
