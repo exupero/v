@@ -146,8 +146,8 @@ module.exports=run=@{[src,R,opts]
      :ops[tr.t]                         ? R(ops[tr.t])
      :error('Invalid AST: '+json(tr))}
   evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
-  evall=@{[R,es,e]var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,out)};eval(C,es[i++],e)}
-  evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,out=[],C=@{out.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(out))};eval(C,es[i++],e)}
+  evall=@{[R,es,e]var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,o)};eval(C,es[i++],e)}
+  evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(o))};eval(C,es[i++],e)}
   evala=@{[R,e,f,x]evall(@{[f,x]
     domq(f)&&symq(x) ? R(H(f.tagName,f.properties,f.children.concat([H(x.v,{},[])])))
    :funq(f)          ? apply(R,f,x)
@@ -223,7 +223,7 @@ arrTseq=@{[xs]var s={
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
-seqTarr=@{[R,xs]var out=[];@(xs){[ys]^^(!ys)R(out);ys.first(@{out.push(x);ys.next(C)})}}
+seqTarr=@{[R,xs]var o=[];@(xs){[ys]^^(!ys)R(o);ys.first(@{o.push(x);ys.next(C)})}}
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={type:'dic',
@@ -239,14 +239,14 @@ seqTdic=@{[ps,f]
           :f          ? R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]f(@{g(R,x,v2)},v1,v2)},k)}))
           :R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]g(R,v1,v2)},k)}))},
          matches:@{[R,a]@(ps){[xs]^^(!xs)R(1);xs.first(@{pair(@{[k,v]a.get(@{R(bl(x==v))},k)},x)})}},
-         keys:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(x);xs.next(C)},x)})}},
-         values:@{[R]var out=[];@(ps){[xs]^^(!xs)R(out);xs.first(@{pair(@{out.push(y);xs.next(C)},x)})}}};
+         keys:@{[R]var o=[];@(ps){[xs]^^(!xs)R(o);xs.first(@{pair(@{o.push(x);xs.next(C)},x)})}},
+         values:@{[R]var o=[];@(ps){[xs]^^(!xs)R(o);xs.first(@{pair(@{o.push(y);xs.next(C)},x)})}}};
   ^^d}
 
-firsts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].first(C):R(out)};xs[i++].first(C)}
-nexts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?xs[i++].next(C):R(out)};xs[i++].next(C)}
-counts=@{[R,xs]var i=0,out=[],C=@{out.push(x);i<xs.length?count(C,xs[i++]):R(out)};count(C,xs[i++])}
-takesC=@{[R,cs]var i=0,out=[],C=@{out.push(x);i<cs.length?cs[i++].take(C):R(out)};cs[i++].take(C)}
+firsts=@{[R,xs]var i=0,o=[],C=@{o.push(x);i<xs.length?xs[i++].first(C):R(o)};xs[i++].first(C)}
+nexts=@{[R,xs]var i=0,o=[],C=@{o.push(x);i<xs.length?xs[i++].next(C):R(o)};xs[i++].next(C)}
+counts=@{[R,xs]var i=0,o=[],C=@{o.push(x);i<xs.length?count(C,xs[i++]):R(o)};count(C,xs[i++])}
+takesC=@{[R,cs]var i=0,o=[],C=@{o.push(x);i<cs.length?cs[i++].take(C):R(o)};cs[i++].take(C)}
 atomic=@{[f]^^@{[R,x,y]colq(x)||colq(y)?vdo(R,f,x,y):R(f(x,y))}}
 
 reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@x!=N).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
@@ -342,7 +342,7 @@ defaultOps={
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x/y,a,b):invals('%',a,b)}),
   '!':arit(
     @{[R,a]
-      numq(a)?@!{var i,out=[];for(i=0;i<a;i++)out.push(i);R(arrTseq(out))}
+      numq(a)?@!{var i,o=[];for(i=0;i<a;i++)o.push(i);R(arrTseq(o))}
      :chaq(a)?@!{a.close();R(N)}
      :inval('!',a)},
     @{[R,a,b]
