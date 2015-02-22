@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
+	"time"
 
 	"github.com/toqueteos/webbrowser"
 )
@@ -19,9 +19,10 @@ var indexTemplate = `<!DOCTYPE html><body>
 <script type="text/json">{{.data}}</script>
 <script type="text/v">{{.src}}</script>
 <script type="text/javascript">
-	window.vAllowEditing=1;
-	window.sendData=function(d){var req=new XMLHttpRequest();req.open('POST','/updateData',true);req.send(d)}
-	window.sendSrc=function(s){var req=new XMLHttpRequest();req.open('POST','/updateSource',true);req.send(s)}
+	window.abort=function(f){
+		var r=new XMLHttpRequest();r.open('GET','/abort',true);
+		r.onreadystatechange=function(){if(r.readyState==4&&r.status==200&&r.responseText=="1"){f(function(d){var s=new XMLHttpRequest();s.open('POST','/payload',true);s.send(JSON.stringify(d))})}}
+		r.send()}
 </script>
 <script type="text/javascript">{{.v}}</script>
 </body>`
@@ -33,6 +34,9 @@ func main() {
 	src := flag.Arg(0)
 	indexPage := template.Must(template.New("index").Parse(indexTemplate))
 	data := "{}"
+	abort := make(chan bool)
+	payload := make(chan string)
+	existingConnection := false
 
 	fi, err := os.Stdin.Stat()
 	if err != nil { log.Fatal(err) }
@@ -49,18 +53,24 @@ func main() {
 		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
 		data := map[string]string{"src": src, "v": string(v), "data": data}
 		if err := indexPage.Execute(w, data); err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
+
+		if existingConnection {
+			abort <- false // abort the existing connection and don't request a payload
+		} else {
+			existingConnection = true
+		}
 	})
 
-	http.HandleFunc("/updateSource", func(w http.ResponseWriter, req *http.Request) {
-		b, err := ioutil.ReadAll(req.Body)
-		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
-		src = string(b)
+	http.HandleFunc("/abort", func(w http.ResponseWriter, req *http.Request) {
+		if <-abort {
+			w.Write([]byte("1"))
+		}
 	})
 
-	http.HandleFunc("/updateData", func(w http.ResponseWriter, req *http.Request) {
+	http.HandleFunc("/payload", func(w http.ResponseWriter, req *http.Request) {
 		b, err := ioutil.ReadAll(req.Body)
 		if err != nil { http.Error(w, err.Error(), http.StatusInternalServerError) }
-		data = string(b)
+		payload <- string(b)
 	})
 
 	go func(){
@@ -71,8 +81,23 @@ func main() {
 		c := make(chan os.Signal)
 		signal.Notify(c, os.Interrupt)
 		for _ = range c {
-			fmt.Printf("{\"data\":%s,\"source\":\"%s\"}\n",data,strings.Replace(src,"\"","\\\"",-1))
-			os.Exit(0)
+			fmt.Fprintf(os.Stderr, "Signalling client to abort...\n")
+			select {
+			case abort <- true:
+				select {
+				case p := <-payload:
+					fmt.Printf(p)
+					os.Exit(0)
+				case <-time.After(5 * time.Second):
+					fmt.Fprintf(os.Stderr, "Timed out waiting for client payload.\n")
+					os.Exit(1)
+				case <-c:
+					os.Exit(0)
+				}
+			case <-time.After(100 * time.Millisecond):
+				fmt.Fprintf(os.Stderr, "No client listening for abort. Aborting without payload.\n")
+				os.Exit(0)
+			}
 		}
 	}()
 
