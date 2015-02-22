@@ -1,4 +1,4 @@
-var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i=0,rdata,data,src,libs,req;
+var v=require('./v.core'),ss=document.querySelectorAll('script[type="text/v"],script[type="text/json"]'),i=0,rdata,data,src,libs,req,el;
 libs={
   ajax:require('../lib/ajax'),
   scale:require('../lib/scale'),
@@ -8,15 +8,15 @@ req=@{[R,n]var lib=libs[n.v];
   if(!lib)throw "No such library '"+n.v+"'";
   else if(typeof lib=='function')R(v.objTdic(lib(v,req)));
   else throw "Invalid library '"+n.v+"'"};
-@(){if(i==ss.length){if(window.abort)window.abort(@{[f]f({src:src,data:data})});^^}
+@(){if(i==ss.length){if(window.abort)window.abort(@{[f]f({src:src,data:data,dom:el.innerHTML})});^^}
   var s=ss[i++];
   if(s.type=='text/json'){rdata=s.childNodes[0].data;C()}
   else if(s.type=='text/v'){
-    src=s.childNodes[0].data;
-    var el=document.createElement('div'),p=s.parentNode,lSrc=null,lData=null,res,
+    src=s.childNodes[0].data,el=document.createElement('div');
+    var p=s.parentNode,lSrc=null,lData=null,res,
         show=@{[R,x]
           !x                    ? R(''+x)
-         :x.type=='VirtualNode' ? R('⋮')
+         :x.type=='VirtualNode' ? R('')
          :x.show                ? x.show(R)
          :R(JSON.stringify(x,null,'  '))},
         r=@{[s,d]var da,err=0;try{da=JSON.parse(d||'{}')}catch(e){err=1};if(err)^^;data=da;

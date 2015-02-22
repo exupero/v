@@ -15,7 +15,9 @@ import (
 )
 
 var port = flag.Int("p", 8000, "Port")
-var indexTemplate = `<!DOCTYPE html><body>
+var indexTemplate = `<!DOCTYPE html>
+<meta http-equiv="content-type" content="text/html; charset=UTF8">
+<body>
 <script type="text/json">{{.data}}</script>
 <script type="text/v">{{.src}}</script>
 <script type="text/javascript">
