@@ -272,11 +272,11 @@ vdo=@{[R,f,a,b]
  :chaq(a)&&chaq(b)?R(mapC(@{[R,x,y]R(f(x,y))},a,b))
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
-concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);zs.first(@{[z]xs.append(@{[xss]xs=xss;zs.next(C)},z)})}}
+concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);S{z<-zs.first;xss<-xs.append(z);xs=xss;zs.next(C)}}}
 reverse=@{[R,xs]seqTarr(@{x.reverse();R(arrTseq(x))},xs)}
 take=@{[R,n,xs]
    n==0?R(xs)
-  :n>0?@!{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));zs.first(@{ys.push(x);zs.next(C)},zs)}}
+  :n>0?@!{var ys=[];@(xs){[zs]^^(!zs||ys.length==n)R(arrTseq(ys));S{x<-zs.first;ys.push(x);zs.next(C)}}}
   :n<0?seqTarr(@{R(arrTseq(x.slice(x.length+n)))},xs)
   :udf}
 drop=@{[R,n,xs]
@@ -284,8 +284,8 @@ drop=@{[R,n,xs]
   :n>0?@!{var i=0;@(xs){[ys]^^(!ys)R(N);^^(i==n)R(ys);i++;ys.next(C)}}
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
-pair=@{[R,p]p.first(@{[p0]p.next(@{[ps]ps.first(@{R(p0,x)})})})}
-rollPairs=@{[R,s]s.first(@{[x]s.next(@{[xs]xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)})})}
+pair=@{[R,p]S{p0<-p.first;ps<-p.next;x<-ps.first;R(p0,x)}}
+rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)}}
 cons=@{[R,x,xs,ys]var s={
   type:'seq',
   show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
