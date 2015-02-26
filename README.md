@@ -2,6 +2,8 @@
 
 V is a programming language for web development. Its syntax and constructs are inspired by K. It also draws inspiration from Go, Haskell, and Clojure.
 
+The implementation is incomplete.
+
 ## Usage
 
 The `v` executable can be used from the command line. It will open a browser window that executes the script and displays the result.
