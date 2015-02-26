@@ -127,8 +127,8 @@ module.exports=run=@{[src,R,opts]
     ^^udfq(tr)||udfq(tr.t)              ? R(tr)
      :tr.t=='assign'                    ? assign(R,e,tr.name)
      :tr.t=='apply'||tr.t=='applyMonad' ? (tr.func.t==':'&&tr.arg.t=='args'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
-     :tr.t=='compose'                   ? evall(@{[f,g]R(@{[R,a,b]g(@{f(R,x)},a,b)})},[tr.f,tr.g],e)
-     :tr.t=='curry'                     ? evall(@{[f,x]R(@{[R,y]f.call(m,R,x,y)})},[tr.func,tr.arg],e)
+     :tr.t=='compose'                   ? S{f,g<-evall([tr.f,tr.g],e);R,a,b<-R;x<-g(a,b);f(R,x)}
+     :tr.t=='curry'                     ? S{f,x<-evall([tr.func,tr.arg],e);R,y<-R;f.call(m,R,x,y)}
      :tr.t=='modVerb'||tr.t=='modNoun'  ? (ops[tr.mod.t]?eval(@{ops[tr.mod.t](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.v+'`'))
      :tr.t=='func'                      ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
      :tr.t=='args'                      ? evall(@{R({t:'args',values:sl(A)})},tr.args,e)
@@ -142,25 +142,26 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='string'                    ? R(tr.v)
      :tr.t=='C'                         ? R(channel.call(m))
      :tr.t=='N'                         ? R(N)
-     :tr.t=='Y'                         ? R(@{[R,f]fs.push(@{f(@{})});R(N)})
+     :tr.t=='Y'                         ? S{R,f<-R;fs.push(@{f(@{})});R(N)}
      :ops[tr.t]                         ? R(ops[tr.t])
      :error('Invalid AST: '+json(tr))}
   evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
   evall=@{[R,es,e]var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,o)};eval(C,es[i++],e)}
   evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(o))};eval(C,es[i++],e)}
-  evala=@{[R,e,f,x]evall(@{[f,x]
+  evala=@{[R,e,f,x]S{f,x<-evall([f,x],e);
     domq(f)&&symq(x) ? R(H(f.tagName,f.properties,f.children.concat([H(x.v,{},[])])))
    :funq(f)          ? apply(R,f,x)
-   :error('Not callable: '+json(f))},[f,x],e)}
+   :error('Not callable: '+json(f))
+  }}
   evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
   apply=@{[R,f,a]
     ^^(a.t!='args')f.call(m,R,a);
     var udfd=a.values.filter(udfq);
     ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{t:'args',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
-  assign=@{[R,e,n]^^R(@{[R,x]eval(@{
-    if(n[0]=='.'){n=n.slice(1);if(n.length>0)data.assoc(@{[d]data=d;R(x)},arrTseq([strTsym(n),x]));else{data=x;R(x)}}
-    else{e[e.length-1][n]=x;R(x)}},x,e)})}
+  assign=@{[R,e,n]^^S{R,x<-R;eval(@{
+    if(n[0]=='.'){n=n.slice(1);if(n.length>0)S{d<-data.assoc(arrTseq([strTsym(n),x]));data=d;R(x)};else{data=x;R(x)}}
+    else{e[e.length-1][n]=x;R(x)}},x,e)}}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()).filter(@{^^!udfq(x)}),[opts.env||{}]);while(fs.length>0)fs.shift()()}
 
@@ -201,7 +202,7 @@ channel=@{var m=this,c={
 mapC=@{[f]var cs=sl(A,1);^^{
   put:@{error('Cannot put on mapped channel')},
   close:@{error('Cannot close a mapped channel')},
-  take:@{[R]takesC(@{[xs]f.apply(N,[R].concat(xs))},cs)},
+  take:@{[R]S{xs<-takesC(cs);f.apply(N,[R].concat(xs))}},
   isOpen:@cs.every(@x.isOpen())}}
 strTsym=@{var s={t:'symbol',v:x,
   show:@{[R]R('`'+x)},
@@ -223,7 +224,7 @@ arrTseq=@{[xs]var s={
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
 map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
-seqTarr=@{[R,xs]var o=[];@(xs){[ys]^^(!ys)R(o);ys.first(@{o.push(x);ys.next(C)})}}
+seqTarr=@{[R,xs]var o=[];@(xs){[ys]^^(!ys)R(o);S{x<-ys.first;o.push(x);ys.next(C)}}}
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={type:'dic',
@@ -231,14 +232,14 @@ seqTdic=@{[ps,f]
          call:@{[_,R,k]get(R,k)},
          apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
          get:get,
-         assoc:@{[R,a]ps.append(@R(seqTdic(x,f)),a)},
+         assoc:@{[R,a]S{x<-ps.append(a);R(seqTdic(x,f))}},
          dissoc:@{[R]},
          remap:@{[R,g,a]
            udfq(a)&&f ? R(seqTdic(ps,@{[R,x]f(@{g(R,x)},x)}))
           :udfq(a)    ? R(seqTdic(ps,g))
-          :f          ? R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]f(@{g(R,x,v2)},v1,v2)},k)}))
-          :R(seqTdic(ps,@{[R,v1,k]a.get(@{[v2]g(R,v1,v2)},k)}))},
-         matches:@{[R,a]@(ps){[xs]^^(!xs)R(1);xs.first(@{pair(@{[k,v]a.get(@{R(bl(x==v))},k)},x)})}},
+          :f          ? R(seqTdic(ps,@{[R,v1,k]S{v2<-a.get(k);x<-f(v1,v2);g(R,x,v2)}}))
+          :R(seqTdic(ps,@{[R,v1,k]S{v2<-a.get(k);g(R,v1,v2)}}))},
+         matches:@{[R,a]@(ps){[xs]^^(!xs)R(1);S{x<-xs.first;k,v<-pair(x);x<-a.get(k);R(bl(x==v))}}},
          keys:@{[R]var o=[];@(ps){[xs]^^(!xs)R(o);xs.first(@{pair(@{o.push(x);xs.next(C)},x)})}},
          values:@{[R]var o=[];@(ps){[xs]^^(!xs)R(o);xs.first(@{pair(@{o.push(y);xs.next(C)},x)})}}};
   ^^d}
@@ -249,7 +250,7 @@ counts=@{[R,xs]var i=0,o=[],C=@{o.push(x);i<xs.length?count(C,xs[i++]):R(o)};cou
 takesC=@{[R,cs]var i=0,o=[],C=@{o.push(x);i<cs.length?cs[i++].take(C):R(o)};cs[i++].take(C)}
 atomic=@{[f]^^@{[R,x,y]colq(x)||colq(y)?vdo(R,f,x,y):R(f(x,y))}}
 
-reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@x!=N).length>0?firsts(@{[ys]f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))},xs):R(m)}}
+reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@x!=N).length>0?S{ys<-firsts(xs);f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))}:R(m)}}
 vdoq=@(numq(x)||mapq(x)||seqq(x)||chaq(x))&&udfq(y)||
       (numq(x)||mapq(x)||seqq(x)||chaq(x))&&numq(y)||
       (numq(x)||mapq(x))&&mapq(y)||
@@ -260,16 +261,16 @@ vdo=@{[R,f,a,b]
  :numq(a)&&numq(b)?R(f(a,b))
  :numq(a)&&seqq(b)?map(R,atomic(@f(a,x)),b)
  :numq(a)&&mapq(b)?b.remap(R,atomic(@f(a,x)))
- :numq(a)&&chaq(b)?R(mapC(@{[R,x]R(f(a,x))},b))
+ :numq(a)&&chaq(b)?R(S{R,x<-mapC(b);R(f(a,x))})
  :seqq(a)&&udfq(b)?map(R,atomic(@f(x)),a)
  :seqq(a)&&numq(b)?map(R,atomic(@f(x,b)),a)
  :seqq(a)&&seqq(b)?map(R,atomic(f),a,b)
  :mapq(a)&&udfq(b)?a.remap(R,atomic(@f(x)))
  :mapq(a)&&numq(b)?a.remap(R,atomic(@f(x,b)))
  :mapq(a)&&mapq(b)?a.remap(R,atomic(f),b)
- :chaq(a)&&udfq(b)?R(mapC(@{[R,x]R(f(x))},a))
- :chaq(a)&&numq(b)?R(mapC(@{[R,x]R(f(x,b))},a))
- :chaq(a)&&chaq(b)?R(mapC(@{[R,x,y]R(f(x,y))},a,b))
+ :chaq(a)&&udfq(b)?R(S{R,x<-mapC(a);R(f(x))})
+ :chaq(a)&&numq(b)?R(S{R,x<-mapC(a);R(f(x,b))})
+ :chaq(a)&&chaq(b)?R(S{R,x,y<-mapC(a,b);R(f(x,y))})
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
 concat=@{[R,xs,ys]@(ys){[zs]^^(!zs)R(xs);S{z<-zs.first;xss<-xs.append(z);xs=xss;zs.next(C)}}}
@@ -285,14 +286,14 @@ drop=@{[R,n,xs]
   :n<0?seqTarr(@{R(arrTseq(x.splice(0,x.length+n)))},xs)
   :udf}
 pair=@{[R,p]S{p0<-p.first;ps<-p.next;x<-ps.first;R(p0,x)}}
-rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?xs.first(@{[y]cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}):R(N)}}
+rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?S{y<-xs.first;cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}:R(N)}}
 cons=@{[R,x,xs,ys]var s={
   type:'seq',
   show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
   first:@{[R]x(R)},
   next:@{[R]xs(@{[n]R(n||ys||N)})},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
-  append:@{[R,y]ys?ys.append(@{[yss]cons(R,x,xs,yss)},y):cons(R,x,xs,arrTseq([y]))},
+  append:@{[R,y]ys?S{yss<-ys.append(y);cons(R,x,xs,yss)}:cons(R,x,xs,arrTseq([y]))},
   call:@{[_,R,n]
     seqq(n)?map(R,@{[R,m]s.call(N,R,m)},n)
    :n==0?s.first(R)
@@ -301,8 +302,8 @@ cons=@{[R,x,xs,ys]var s={
 where=@{[R,xs,i,j]
   !xs           ? R(N)
  :udfq(i)       ? where(R,xs,0)
- :udfq(j)       ? xs.first(@{where(R,xs,i,x)})
- :j==0          ? xs.next(@{where(R,x,i+1)})
+ :udfq(j)       ? S{x<-xs.first;where(R,xs,i,x)}
+ :j==0          ? S{x<-xs.next;where(R,x,i+1)}
  :cons(R,@{[R]R(i)},@{[R]where(R,xs,i,j-1)})}
 assoc=@{[o,p,v]var x={},k;for(k in o)x[k]=o[k];x[p]=v;^^x}
 assocIn=@{[o,ps,v]^^ps.length==1?assoc(o,ps[0],v):assoc(o,ps[0],assocIn(o,ps.slice(1),v))}
@@ -404,16 +405,16 @@ defaultOps={
       symq(a)&&symq(b)?R(H(a.v,{},[H(b.v,{},[])]))
      :symq(a)&&seqq(b)?@!{var i=0;map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x,h._index=i++;R(h)},b)}
      :symq(a)&&strq(b)?R(H(a.v,{},[String(b)]))
-     :seqq(a)&&symq(b)?seqTarr(@{[xs]config(R,H(b.v,{},[]),xs)},a)
-     :seqq(a)&&seqq(b)?seqTarr(@{[xs]map(R,@{[R,x]config(R,x,xs)},b)},a)
-     :seqq(a)&&domq(b)?seqTarr(@{[xs]config(R,b,xs)},a)
+     :seqq(a)&&symq(b)?S{xs<-seqTarr(a);config(R,H(b.v,{},[]),xs)}
+     :seqq(a)&&seqq(b)?S{xs<-seqTarr(a);map(R,@{[R,x]config(R,x,xs)},b)}
+     :seqq(a)&&domq(b)?S{xs<-seqTarr(a);config(R,b,xs)}
      :domq(a)&&symq(b)?R(H(a.tagName,a.properties,a.children.concat([H(b.v,{},[])])))
      :domq(a)&&seqq(b)?seqTarr(@{R(H(a.tagName,a.properties,a.children.concat(x)))},b)
      :invals('$',a,b)}),
   D:arit(@{[R,a]R(seqTdic(a))}),
   L:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
-  "':":aarit(@{[R,f,a]rollPairs(@{map(R,@{[R,x]f(R,x[0],x[1])},x)},a)}),
+  "':":aarit(@{[R,f,a]S{x<-rollPairs(a);map(R,@{[R,x]f(R,x[0],x[1])},x)}}),
   '/:':aarit(
     map,
     @{[R,f,a,b]map(R,@{[R,x]f(R,a,x)},b)}),
@@ -421,15 +422,15 @@ defaultOps={
   '/':aarit(
     @{[R,f,a]
       if(f.arity==1){var t;@(a){^^(teq(x,t))R(x);t=x;f(C,x)}}
-      else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);xs.first(@{[x]f(@{t=x;xs.next(C)},t,x)})};a.first(@{t=x;a.next(C)})}},
+      else if(f.arity==2){var t,C=@{[xs]^^(!xs)R(t);S{x<-xs.first;x<-f(t,x);t=x;xs.next(C)}};S{x<-a.first;t=x;a.next(C)}}},
     @{[R,f,a,b]
       if(f.arity==1){^^numq(a)?@!{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}
-                      :funq(a)?@!{@(b){a(@{[t]t?f(C,x):R(x)},x)}}
+                      :funq(a)?@!{@(b){S{t<-a(x);t?f(C,x):R(x)}}}
                       :invals('f/',a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
   '\\':aarit(@{[R,f,a]
-    var C=@{[R,x,xs]xs?xs.first(@{[y]f(@{cons(R,@{[R]R(x)},@{[R]xs.next(@{[ys]C(R,x,ys)})})},x,y)}):R(N)};
-    a.first(@{cons(R,@{[R]R(x)},@{[R]a.next(@{[xs]C(R,x,xs)})})})}),
+    var C=@{[R,x,xs]xs?S{y<-xs.first;x<-f(x,y);cons(R,@{[R]R(x)},@{[R]S{ys<-xs.next;C(R,x,ys)}})}:R(N)};
+    S{x<-a.first;cons(R,@{[R]R(x)},@{[R]S{xs<-a.next;C(R,x,xs)}})}}),
 }
 
 run.jsTv=jsTv;

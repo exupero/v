@@ -24,10 +24,14 @@ macro S{
   rule{{$x:ident<-$a:ident.$y:ident($args...)}}=>{$a.$y(function($x){return $x},$args...)}
   rule{{$x:ident<-$a:ident.$y:ident($args...);$rest...}}=>{$a.$y(function($x){S{$rest...}},$args...)}
   rule{{$x:ident<-$y:ident($args...);$rest...}}=>{$y(function($x){S{$rest...}},$args...)}
+  rule{{$x:ident(,)...<-$y:ident($args...);$rest...}}=>{$y(function($x(,)...){S{$rest...}},$args...)}
+  rule{{$x:ident(,)...<-$a:ident.$y:ident($args...);$rest...}}=>{$a.$y(function($x(,)...){S{$rest...}},$args...)}
   rule{{$x:ident<-$y:ident}}=>{$y(function($x){return $x})}
   rule{{$x:ident<-$a:ident.$y:ident}}=>{$a.$y(function($x){return $x})}
   rule{{$x:ident<-$a:ident.$y:ident;$rest...}}=>{$a.$y(function($x){S{$rest...}})}
   rule{{$x:ident<-$y:ident;$rest...}}=>{$y(function($x){S{$rest...}})}
+  rule{{$x:ident(,)...<-$y:ident;$rest...}}=>{$y(function($x(,)...){S{$rest...}})}
+  rule{{$x:ident(,)...<-$a:ident.$y:ident;$rest...}}=>{$a.$y(function($x(,)...){S{$rest...}})}
   rule{{$x:expr;$rest...}}=>{$x;S{$rest...}}
   rule{{$x:expr}}=>{return $x}
 }
