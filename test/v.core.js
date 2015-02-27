@@ -462,6 +462,7 @@ process.stdout.write('\n');
   expect('5\n NB. Comment',5);
   expect.trace('&1 2 3 4',[0,1,1,2,2,2,3,3,3,3]);
   expect('`key\'.data[&{"b"=x@`key}\'.data]',['b'],{data:{data:[{key:'a'},{key:'b'},{key:'c'}]}});
+  expect('"b"=`key\'.data',[0,1,0],{data:{data:[{key:'a'},{key:'b'},{key:'c'}]}});
 };
 process.stdout.write('\n');
 process.exit(failures);

@@ -165,7 +165,7 @@ module.exports=run=@{[src,R,opts]
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
   evalss(R,parse(src.trim()).filter(@{^^!udfq(x)}),[opts.env||{}]);while(fs.length>0)fs.shift()()}
 
-var ich,numq,objq,mapq,arrq,seqq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,where,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
+var ich,numq,objq,mapq,arrq,seqq,atoq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,where,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
@@ -174,6 +174,7 @@ funq=ich('call','apply');
 arrq=@{^^x instanceof Array};
 seqq=ich('next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
+atoq=@numq(x)||strq(x)||symq(x);
 vecq=@numq(x)||seqq(x);
 chaq=ich('put','take','close','isOpen');
 colq=@seqq(x)||mapq(x)||chaq(x);
@@ -251,25 +252,25 @@ takesC=@{[R,cs]var i=0,o=[],C=@{o.push(x);i<cs.length?cs[i++].take(C):R(o)};cs[i
 atomic=@{[f]^^@{[R,x,y]colq(x)||colq(y)?vdo(R,f,x,y):R(f(x,y))}}
 
 reduce=@{[R,f,m]@(sl(A,3)){[xs]xs.filter(@x!=N).length>0?S{ys<-firsts(xs);f.apply(N,[@{[mm]m=mm;nexts(C,xs)},m].concat(ys))}:R(m)}}
-vdoq=@(numq(x)||mapq(x)||seqq(x)||chaq(x))&&udfq(y)||
-      (numq(x)||mapq(x)||seqq(x)||chaq(x))&&numq(y)||
-      (numq(x)||mapq(x))&&mapq(y)||
-      (numq(x)||chaq(x))&&chaq(y)||
-      (numq(x)||seqq(y))&&seqq(y)
+vdoq=@(atoq(x)||mapq(x)||seqq(x)||chaq(x))&&udfq(y)||
+      (atoq(x)||mapq(x)||seqq(x)||chaq(x))&&atoq(y)||
+      (atoq(x)||mapq(x))&&mapq(y)||
+      (atoq(x)||chaq(x))&&chaq(y)||
+      (atoq(x)||seqq(y))&&seqq(y)
 vdo=@{[R,f,a,b]
-  numq(a)&&udfq(b)?R(f(a))
- :numq(a)&&numq(b)?R(f(a,b))
- :numq(a)&&seqq(b)?map(R,atomic(@f(a,x)),b)
- :numq(a)&&mapq(b)?b.remap(R,atomic(@f(a,x)))
- :numq(a)&&chaq(b)?R(S{R,x<-mapC(b);R(f(a,x))})
+  atoq(a)&&udfq(b)?R(f(a))
+ :atoq(a)&&atoq(b)?R(f(a,b))
+ :atoq(a)&&seqq(b)?map(R,atomic(@f(a,x)),b)
+ :atoq(a)&&mapq(b)?b.remap(R,atomic(@f(a,x)))
+ :atoq(a)&&chaq(b)?R(S{R,x<-mapC(b);R(f(a,x))})
  :seqq(a)&&udfq(b)?map(R,atomic(@f(x)),a)
- :seqq(a)&&numq(b)?map(R,atomic(@f(x,b)),a)
+ :seqq(a)&&atoq(b)?map(R,atomic(@f(x,b)),a)
  :seqq(a)&&seqq(b)?map(R,atomic(f),a,b)
  :mapq(a)&&udfq(b)?a.remap(R,atomic(@f(x)))
- :mapq(a)&&numq(b)?a.remap(R,atomic(@f(x,b)))
+ :mapq(a)&&atoq(b)?a.remap(R,atomic(@f(x,b)))
  :mapq(a)&&mapq(b)?a.remap(R,atomic(f),b)
  :chaq(a)&&udfq(b)?R(S{R,x<-mapC(a);R(f(x))})
- :chaq(a)&&numq(b)?R(S{R,x<-mapC(a);R(f(x,b))})
+ :chaq(a)&&atoq(b)?R(S{R,x<-mapC(a);R(f(x,b))})
  :chaq(a)&&chaq(b)?R(S{R,x,y<-mapC(a,b);R(f(x,y))})
  :R(udf)}
 count=@{[R,xs]var c=0;@(xs){[xss]^^(!xss)R(c);c++;xss.next(C)}}
@@ -381,9 +382,8 @@ defaultOps={
     @{[R,a,b]vecq(a)&&vecq(b)?vdo(R,@x>y?x:y,a,b):invals('|',a,b)}),
   '=':arit(N,
     @{[R,a,b]
-      vecq(a)&&vecq(b)               ? vdo(R,@bl(x==y),a,b)
-     :to('string',a)&&to('string',b) ? R(bl(a==b))
-     :symq(a)&&symq(b)               ? R(bl(a.v==b.v))
+      symq(a)&&symq(b) ? R(bl(a.v==b.v))
+     :vdoq(a)&&vdoq(b) ? vdo(R,@bl(x==y),a,b)
      :R(0)}),
   ',':arit(
     @{[R,a]numq(a)?R(arrTseq([a])):inval(',',a)},
