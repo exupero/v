@@ -9,10 +9,16 @@ The implementation is incomplete.
 The `v` executable can be used from the command line. It will open a browser window that executes the script and displays the result.
 
 ```
-v '$(`t;"Hello World")$`div'
+v '$`div$"Hello World"
 ```
 
-The above example creates a `div` with the text "Hello World". The script can be edited and the result will be updated. Killing the server will print a JSON structure that includes the final state of the edited script.
+It can also be given a file to execute.
+
+```
+v examples/hello.v
+```
+
+The above examples creates a `div` with the text "Hello World". The script can be edited in the browser and the result will be updated. Killing the server will print a JSON structure that includes the final state of the edited script.
 
 You can also pass data over stdin:
 

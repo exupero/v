@@ -29,11 +29,24 @@ var indexTemplate = `<!DOCTYPE html>
 <script type="text/javascript">{{.v}}</script>
 </body>`
 
+func source(data string) string {
+	_, err := os.Stat(data)
+	if err == nil {
+		b, err := ioutil.ReadFile(data)
+		if err != nil {
+			panic(err)
+		}
+		return string(b)
+	} else {
+		return data
+	}
+}
+
 func main() {
 	flag.Parse()
 
 	url := fmt.Sprintf("0.0.0.0:%d", *port)
-	src := flag.Arg(0)
+	src := source(flag.Arg(0))
 	indexPage := template.Must(template.New("index").Parse(indexTemplate))
 	data := "{}"
 	abort := make(chan bool)
