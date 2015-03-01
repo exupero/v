@@ -52,7 +52,9 @@ make test
 - Integer and decimal values are numbers.
 - Consecutive numbers are vectors.
 - Expressions wrapped in curly braces are functions.
-- Variables are nouns.
+- Names are nouns.
+- `.` is the global data object.
+- Names prefixed by `.` are fields on the global data object.
 
 ### Verbs
 
@@ -66,7 +68,6 @@ make test
 - `&` where, minimum
 - `*` first/take from channel, multiply
 - `,` enlist, join
-- `.`
 - `<` dict keys, less than
 - `>` dict values, greater than
 - `?`
