@@ -4,3 +4,4 @@ assets
 assets.go
 v
 src/github.com
+node_modules/
