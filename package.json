@@ -1,6 +1,8 @@
 {
   "name": "v",
+  "version": "0.0.0",
   "devDependencies": {
+    "sweet.js": "0.7.4",
     "browserify": "4.1.2",
     "d3": "3.5.3",
     "virtual-dom": "0.0.24"
