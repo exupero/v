@@ -27,6 +27,7 @@ In addition to the script and data, a string representing the rendered DOM is in
 ## Building
 
 ```
+npm install
 make
 ```
 
