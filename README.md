@@ -33,6 +33,8 @@ In addition to the script and data, a string representing the rendered DOM is in
 ## Building
 
 ```
+go get -u github.com/jteeuwen/go-bindata/...
+GOPATH=`pwd` go get github.com/toqueteos/webbrowser
 npm install
 make
 ```
