@@ -55,6 +55,7 @@ make test
 - Names are nouns.
 - `.` is the global data object.
 - Names prefixed by `.` are fields on the global data object.
+- `Now` current date and time
 
 ### Verbs
 
@@ -78,7 +79,7 @@ make test
 - `_` floor, drop
 - `:`
 - `D` dict from sequence
-- `L` lazy sequence
+- `L` lazy sequence from function
 - `Y` fork from function
 
 ### Adverbs

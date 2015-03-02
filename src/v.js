@@ -6,7 +6,7 @@ libs={
 };
 req=@{[R,n]var lib=libs[n.v];
   if(!lib)throw "No such library '"+n.v+"'";
-  else if(typeof lib=='function')R(v.objTdic(lib(v,req)));
+  else if(typeof lib=='function')R(v.jsTv(lib(v,req)));
   else throw "Invalid library '"+n.v+"'"};
 @(){if(i==ss.length){if(window.abort)window.abort(@{[f]f({src:src,data:data,dom:el.innerHTML})});^^}
   var s=ss[i++];

@@ -39,7 +39,7 @@ lex=@{[input]
         case 'C':e('C','n');break;
         case 'D':e('D','v');break;
         case 'L':e('L','v');break;
-        case 'N':e('N','n');break;
+        case 'N':t.acceptSeq("ow")?e('Now','n'):e('N','n');break;
         case 'Y':e('Y','v');break;
         default:t.backup();^^t.accept(digits)?number:@{[t]t.until(stop);t.emit('word','n');^^init}}}}
   symbol=@{[t]t.until(stop);t.emit('symbol','n');^^init}
@@ -141,6 +141,7 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='float'                     ? R(parseFloat(tr.v))
      :tr.t=='string'                    ? R(tr.v)
      :tr.t=='C'                         ? R(channel.call(m))
+     :tr.t=='Now'                       ? R(new Date())
      :tr.t=='N'                         ? R(N)
      :tr.t=='Y'                         ? S{R,f<-R;fs.push(@{f(@{})});R(N)}
      :ops[tr.t]                         ? R(ops[tr.t])
@@ -185,6 +186,7 @@ VHtVS=@{^^VS(x.tagName,x.properties,x.tagName=='foreignObject'?x.children:x.chil
 H=@{[t,p,c]^^t=='svg'?VS(t,p,c.map(VHtVS)):VH(t,p,c)}
 jsTv=@{
   ^^arrq(x)?arrTseq(x.map(jsTv))
+   :funq(x)?x
    :objq(x)?objTdic(x,1)
    :x}
 objTdic=@{var s=[],k;for(k in x)s.push(arrTseq([strTsym(k),y?jsTv(x[k]):x[k]]));^^seqTdic(arrTseq(s))}
@@ -216,7 +218,7 @@ strTsym=@{var s={t:'symbol',v:x,
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 arrTseq=@{[xs]var s={
   type:'seq',
-  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
+  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x&&x.show?x.show(R):R(JSON.stringify(x))},s)},
   first:@{[R]R(xs[0])},
   next:@{[R]R(xs.length>1?arrTseq(xs.slice(1)):N)},
   prepend:@{[R,x]R(arrTseq([x].concat(xs)))},

@@ -55,6 +55,7 @@ process.stdout.write('\n');
     {t:'N',v:'N',p:'n'},{t:'word',v:'i',p:'n'}]);
   expect("abc\ndef",[{t:'word',v:'abc',p:'n'},{t:';',v:'\n',p:void 0},{t:'word',v:'def',p:'n'}]);
   expect("abc NB. this",[{t:'word',v:'abc',p:'n'}]);
+  expect('Now',[{t:'Now',v:'Now',p:'n'}]);
 };
 
 @!{
@@ -463,6 +464,9 @@ process.stdout.write('\n');
   expect.trace('&1 2 3 4',[0,1,1,2,2,2,3,3,3,3]);
   expect('`key\'.data[&{"b"=x@`key}\'.data]',['b'],{data:{data:[{key:'a'},{key:'b'},{key:'c'}]}});
   expect('"b"=`key\'.data',[0,1,0],{data:{data:[{key:'a'},{key:'b'},{key:'c'}]}});
+  expect('Now',@{
+    ^^(Object.prototype.toString.call(x)!='[object Date]')0;
+    ^^((new Date()).getTime()-x.getTime()<10)});
 };
 process.stdout.write('\n');
 process.exit(failures);
