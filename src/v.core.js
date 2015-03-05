@@ -121,20 +121,20 @@ parse=@exprs(wraps(lex(x)))
 
 var arity=@{[f,a]f.arity=a;^^f};
 module.exports=run=@{[src,R,opts]
-  var eval,evalss,evall,evals,evala,evalc,apply,assign,find,fs=[],m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id,data=opts.data?jsTv(opts.data):objTdic({});
+  var ev,evb,evs,evl,eva,evc,apply,assign,find,fs=[],m,opts=opts||{},ops=opts.ops||defaultOps,R=R||id,data=opts.data?jsTv(opts.data):objTdic({});
   m={root:this,suspend:@fs.push(x)};
-  eval=@{[R,tr,e]
+  ev=@{[R,tr,e]
     ^^udfq(tr)||udfq(tr.t)              ? R(tr)
      :tr.t=='assign'                    ? assign(R,e,tr.name)
-     :tr.t=='apply'||tr.t=='applyMonad' ? (tr.func.t==':'&&tr.arg.t=='args'?evalc(R,e,tr.arg.args):evala(R,e,tr.func,tr.arg))
-     :tr.t=='compose'                   ? S{f,g<-evall([tr.f,tr.g],e);R,a,b<-R;x<-g(a,b);f(R,x)}
-     :tr.t=='curry'                     ? S{f,x<-evall([tr.func,tr.arg],e);R,y<-R;f.call(m,R,x,y)}
-     :tr.t=='modVerb'||tr.t=='modNoun'  ? (ops[tr.mod.t]?eval(@{ops[tr.mod.t](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.v+'`'))
-     :tr.t=='func'                      ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evalss(R,tr.body,e.concat([e2]))},tr.args.length))
-     :tr.t=='args'                      ? evall(@{R({t:'args',values:sl(A)})},tr.args,e)
-     :tr.t=='vector'                    ? evals(R,tr.values,e)
-     :tr.t=='list'                      ? evals(R,tr.values,e)
-     :tr.t=='word'                      ? eval(R,find(tr.v,e),N)
+     :tr.t=='apply'||tr.t=='applyMonad' ? (tr.func.t==':'&&tr.arg.t=='args'?evc(R,e,tr.arg.args):eva(R,e,tr.func,tr.arg))
+     :tr.t=='compose'                   ? S{f,g<-evs([tr.f,tr.g],e);R,a,b<-R;x<-g(a,b);f(R,x)}
+     :tr.t=='curry'                     ? S{f,x<-evs([tr.func,tr.arg],e);R,y<-R;f.call(m,R,x,y)}
+     :tr.t=='modVerb'||tr.t=='modNoun'  ? (ops[tr.mod.t]?ev(@{ops[tr.mod.t](R,x)},tr.arg,e):error('No such adverb `'+tr.mod.v+'`'))
+     :tr.t=='func'                      ? R(arity(@{[R]var a=sl(A,1),i,e2={};for(i=0;i<tr.args.length;i++)e2[tr.args[i]]=a[i];evb(R,tr.body,e.concat([e2]))},tr.args.length))
+     :tr.t=='args'                      ? evs(@{R({t:'args',values:sl(A)})},tr.args,e)
+     :tr.t=='vector'                    ? evl(R,tr.values,e)
+     :tr.t=='list'                      ? evl(R,tr.values,e)
+     :tr.t=='word'                      ? ev(R,find(tr.v,e),N)
      :tr.t=='data'                      ? data.get(R,strTsym(tr.v))
      :symq(tr)                          ? R(strTsym(tr.v))
      :tr.t=='int'                       ? R(parseInt(tr.v))
@@ -146,25 +146,25 @@ module.exports=run=@{[src,R,opts]
      :tr.t=='Y'                         ? S{R,f<-R;fs.push(@{f(@{})});R(N)}
      :ops[tr.t]                         ? R(ops[tr.t])
      :error('Invalid AST: '+json(tr))}
-  evalss=@{[R,es,e]var i=0;@(){i<es.length?eval(C,es[i++],e):R(x)}}
-  evall=@{[R,es,e]var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R.apply(N,o)};eval(C,es[i++],e)}
-  evals=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,o=[],C=@{o.push(x);i<es.length?eval(C,es[i++],e):R(arrTseq(o))};eval(C,es[i++],e)}
-  evala=@{[R,e,f,x]S{f,x<-evall([f,x],e);
+  evb=@{[R,es,e]var i=0;@(){i<es.length?ev(C,es[i++],e):R(x)}}
+  evs=@{[R,es,e]var i=0,o=[],C=@{o.push(x);i<es.length?ev(C,es[i++],e):R.apply(N,o)};ev(C,es[i++],e)}
+  evl=@{[R,es,e]^^(es.length==0)R(arrTseq([]));var i=0,o=[],C=@{o.push(x);i<es.length?ev(C,es[i++],e):R(arrTseq(o))};ev(C,es[i++],e)}
+  eva=@{[R,e,f,x]S{f,x<-evs([f,x],e);
     domq(f)&&symq(x) ? R(H(f.tagName,f.properties,f.children.concat([H(x.v,{},[])])))
    :funq(f)          ? apply(R,f,x)
    :error('Not callable: '+json(f))
   }}
-  evalc=@{[R,e,es]es.length==1?eval(R,es[0],e):eval(@{x?eval(R,es[1],e):evalc(R,e,es.slice(2))},es[0],e)}
+  evc=@{[R,e,es]es.length==1?ev(R,es[0],e):S{x<-ev(es[0],e);x?ev(R,es[1],e):evc(R,e,es.slice(2))}}
   apply=@{[R,f,a]
     ^^(a.t!='args')f.call(m,R,a);
     var udfd=a.values.filter(udfq);
     ^^(udfd.length==0)f.apply(m,[R].concat(a.values));
     R(arity(@{[R]var b=sl(A,1);apply(R,f,{t:'args',values:a.values.map(@udfq(x)?b.shift():x)})},udfd.length))}
-  assign=@{[R,e,n]^^S{R,x<-R;eval(@{
+  assign=@{[R,e,n]^^S{R,x<-R;ev(@{
     if(n[0]=='.'){n=n.slice(1);if(n.length>0)S{d<-data.assoc(arrTseq([strTsym(n),x]));data=d;R(x)};else{data=x;R(x)}}
     else{e[e.length-1][n]=x;R(x)}},x,e)}}
   find=@{[w,e]var i,x;for(i=e.length-1;i>=0;i--){x=e[i][w];^^(!udfq(x))x}error("Cannot find var `"+w+"`")}
-  evalss(R,parse(src.trim()).filter(@{^^!udfq(x)}),[opts.env||{}]);while(fs.length>0)fs.shift()()}
+  evb(R,parse(src.trim()).filter(@{^^!udfq(x)}),[opts.env||{}]);while(fs.length>0)fs.shift()()}
 
 var ich,numq,objq,mapq,arrq,seqq,atoq,vecq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,objTdic,arrTseq,seqTarr,seqTdic,strTsym,count,firsts,nexts,counts,vdo,reduce,take,drop,concat,reverse,pair,lazySeq,map,cons,where,channel,teq,atomic,mapC,takesC,rollPairs,func,config,show,assoc,assocIn,H,VHtVS;
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
