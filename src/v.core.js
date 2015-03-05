@@ -328,73 +328,74 @@ show=@{[r,t]
 func=@funq(x)?x:@{[R]R(x)}
 teq=@x==y||Math.abs(x-y)<1e-10
 
-var arit=@{var ars=A;^^arity(@{ars[A.length-2].apply(this,A)},2)},aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
+var arit=@{[n]var ars=sl(A,1);^^arity(@{[R,a,b]R.fail=@{udfq(y)?inval(n,x):invals(n,x,y)};ars[A.length-2].call(this,R,a,b)},2)},
+    aarit=@{var ars=A;^^@{[R,f]R(@{[R]ars[A.length-2].apply(this,[R,f].concat(sl(A,1)))})}};
 defaultOps={
-  '~':arit(
-    @{[R,a]vdoq(a)?vdo(R,@numq(x)?bl(!x):inval('~',x),a):inval('~',a)},
+  '~':arit('~',
+    @{[R,a]vdoq(a)?vdo(R,@numq(x)?bl(!x):R.fail(x),a):R.fail(a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(bl(a==b))
      :seqq(a)&&seqq(b)?S{cs<-counts([a,b]);cs[0]!=cs[1]?R(0):reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)}
      :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
-     :invals('~',a,b)}),
-  '+':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x+y:invals('+',x,y),a,b):invals('+',a,b)}),
-  '-':arit(
-    @{[R,a]vdoq(a)?vdo(R,@numq(x)?-x:inval('-',x),a):inval('-',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x-y:invals('-',x,y),a,b):invals('-',a,b)}),
-  '*':arit(
+     :R.fail(a,b)}),
+  '+':arit('+',N,@{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x+y:R.fail(x,y),a,b):R.fail(a,b)}),
+  '-':arit('-',
+    @{[R,a]vdoq(a)?vdo(R,@numq(x)?-x:R.fail(x),a):R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x-y:R.fail(x,y),a,b):R.fail(a,b)}),
+  '*':arit('*',
     @{[R,a]
       seqq(a)?a.first(R)
      :chaq(a)?a.take(R)
-     :inval('*',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x*y:invals('*',x,y),a,b):invals('*',a,b)}),
-  '%':arit(
-    @{[R,a]vdoq(a)?vdo(R,@numq(x)?1/x:inval('%',x),a):inval('%',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x/y:invals('%',x,y),a,b):invals('%',a,b)}),
-  '!':arit(
+     :R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x*y:R.fail(x,y),a,b):R.fail(a,b)}),
+  '%':arit('%',
+    @{[R,a]vdoq(a)?vdo(R,@numq(x)?1/x:R.fail(x),a):R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?x/y:R.fail(x,y),a,b):R.fail(a,b)}),
+  '!':arit('!',
     @{[R,a]
       numq(a)?@!{var i,o=[];for(i=0;i<a;i++)o.push(i);R(arrTlis(o))}
      :chaq(a)?@!{a.close();R(N)}
-     :inval('!',a)},
+     :R.fail(a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(a%b)
      :chaq(a)?a.put(R,b)
-     :invals('!',a,b)}),
-  '@':arit(
+     :R.fail(a,b)}),
+  '@':arit('@',
     @{[R,a]R(bl(numq(a)||symq(a)))},
-    @{[R,a,b]funq(a)?a.call(N,R,b):invals('@',a,b)}),
-  '#':arit(
+    @{[R,a,b]funq(a)?a.call(N,R,b):R.fail(a,b)}),
+  '#':arit('#',
     @{[R,a]
       strq(a)?R(a.length)
      :seqq(a)?count(R,a)
      :chaq(a)?R(a.isOpen())
-     :inval('#',a)},
+     :R.fail(a)},
     @{[R,a,b]
       numq(a)&&seqq(b)?take(R,a,b)
      :numq(a)&&strq(b)?R(b.slice(0,a))
-     :invals('#',a,b)}),
-  '_':arit(
-    @{[R,a]vdoq(a)?vdo(R,@numq(x)?Math.floor(x):inval('_',x),a):inval('_',a)},
-    @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):invals('_',a,b)}),
-  '^':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?Math.pow(x,y):invals('_',x,y),a,b):invals('^',a,b)}),
-  '<':arit(
-    @{[R,a]mapq(a)?a.keys(R):inval('<',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?bl(x<y):invals('<',x,y),a,b):invals('<',a,b)}),
-  '>':arit(
-    @{[R,a]mapq(a)?a.values(R):inval('>',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?bl(x>y):invals('>',x,y),a,b):invals('>',a,b)}),
-  '&':arit(
+     :R.fail(a,b)}),
+  '_':arit('_',
+    @{[R,a]vdoq(a)?vdo(R,@numq(x)?Math.floor(x):R.fail(x),a):R.fail(a)},
+    @{[R,a,b]numq(a)&&seqq(b)?drop(R,a,b):R.fail(a,b)}),
+  '^':arit('^',N,@{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?Math.pow(x,y):R.fail(x,y),a,b):R.fail(a,b)}),
+  '<':arit('<',
+    @{[R,a]mapq(a)?a.keys(R):R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?bl(x<y):R.fail(x,y),a,b):R.fail(a,b)}),
+  '>':arit('>',
+    @{[R,a]mapq(a)?a.values(R):R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?bl(x>y):R.fail(x,y),a,b):R.fail(a,b)}),
+  '&':arit('&',
     @{[R,a]where(R,a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?(x>y?y:x):invals('&',x,y),a,b):invals('&',a,b)}),
-  '|':arit(
-    @{[R,a]seqq(a)?reverse(R,a):inval('|',a)},
-    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?(x>y?x:y):invals('|',x,y),a,b):invals('|',a,b)}),
-  '=':arit(N,
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?(x>y?y:x):R.fail(x,y),a,b):R.fail(a,b)}),
+  '|':arit('|',
+    @{[R,a]seqq(a)?reverse(R,a):R.fail(a)},
+    @{[R,a,b]vdoq(a,b)?vdo(R,@numq(x)&&numq(y)?(x>y?x:y):R.fail(x,y),a,b):R.fail(a,b)}),
+  '=':arit('=',N,
     @{[R,a,b]
       symq(a)&&symq(b) ? R(bl(a.v==b.v))
      :vdoq(a)&&vdoq(b) ? vdo(R,@bl(x==y),a,b)
      :R(0)}),
-  ',':arit(
-    @{[R,a]numq(a)?R(arrTlis([a])):inval(',',a)},
+  ',':arit(',',
+    @{[R,a]numq(a)?R(arrTlis([a])):R.fail(a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(arrTlis([a,b]))
      :numq(a)&&seqq(b)?b.prepend(R,a)
@@ -402,13 +403,13 @@ defaultOps={
      :seqq(a)&&seqq(b)?concat(R,a,b)
      :seqq(a)&&mapq(b)?b.assoc(R,a)
      :mapq(a)&&seqq(b)?a.assoc(R,b)
-     :invals(',',a,b)}),
-  '$':arit(
+     :R.fail(a,b)}),
+  '$':arit('$',
     @{[R,a]var m=this;
       numq(a)?R(''+a)
      :symq(a)?@!{var h=H(a.v,{},[]);show(m.root,h);R(h)}
      :domq(a)?@!{show(m.root,a);R(a)}
-     :inval('$',a)},
+     :R.fail(a)},
     @{[R,a,b]
       symq(a)&&symq(b)?R(H(a.v,{},[H(b.v,{},[])]))
      :symq(a)&&seqq(b)?@!{var i=0;map(R,@{[R,x]var h=H(a.v,{},[]);h._data=x,h._index=i++;R(h)},b)}
@@ -418,9 +419,9 @@ defaultOps={
      :seqq(a)&&domq(b)?S{xs<-seqTarr(a);config(R,b,xs)}
      :domq(a)&&symq(b)?R(H(a.tagName,a.properties,a.children.concat([H(b.v,{},[])])))
      :domq(a)&&seqq(b)?seqTarr(@{R(H(a.tagName,a.properties,a.children.concat(x)))},b)
-     :invals('$',a,b)}),
-  D:arit(@{[R,a]R(seqTdic(a))}),
-  L:arit(N,@{[R,a,b]lazySeq(R,a,b)}),
+     :R.fail(a,b)}),
+  D:arit('D',@{[R,a]R(seqTdic(a))}),
+  L:arit('L',N,@{[R,a,b]lazySeq(R,a,b)}),
   "'":aarit(map),
   "':":aarit(@{[R,f,a]S{x<-rollPairs(a);map(R,@{[R,x]f(R,x[0],x[1])},x)}}),
   '/:':aarit(
@@ -434,7 +435,7 @@ defaultOps={
     @{[R,f,a,b]
       if(f.arity==1){^^numq(a)?@!{var i=0;@(b){^^(i==a)R(x);f(@{i++;C(x)},x)}}
                       :funq(a)?@!{@(b){S{t<-a(x);t?f(C,x):R(x)}}}
-                      :invals('f/',a,b)}
+                      :R.fail(a,b)}
       error('Invalid arity for `/` function: '+f.arity)}),
   '\\':aarit(@{[R,f,a]
     var C=@{[R,x,xs]xs?S{y<-xs.first;x<-f(x,y);cons(R,@{[R]R(x)},@{[R]S{ys<-xs.next;C(R,x,ys)}})}:R(N)};
