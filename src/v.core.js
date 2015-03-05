@@ -170,13 +170,15 @@ var ich,numq,objq,mapq,arrq,seqq,atoq,funq,symq,vdoq,chaq,strq,colq,domq,jsTv,ob
 ich=@{var ms=sl(A);^^@{[x]^^x&&ms.every(@{[m]^^to('function',x[m])})}}
 numq=pt(to,'number');
 strq=pt(to,'string');
-symq=@x.t=='symbol';
 funq=ich('call','apply');
-arrq=@{^^x instanceof Array};
+typq=ich('type');
 seqq=ich('next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
-atoq=@numq(x)||strq(x)||symq(x);
 chaq=ich('put','take','close','isOpen');
+arrq=@{^^x instanceof Array};
+symq=@x.t=='symbol';
+vecq=@seqq(x)&&typq(x)
+atoq=@numq(x)||strq(x)||symq(x);
 colq=@seqq(x)||mapq(x)||chaq(x);
 domq=@x&&x.type=='VirtualNode';
 objq=@{^^x instanceof Object}
@@ -215,15 +217,16 @@ strTsym=@{var s={t:'symbol',v:x,
    :domq(a)?R(H(s.v,{},[a]))
    :inval(json(s),a)},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
-arrTvec=@{[xs]var s={type:'vec',
+arrTvec=@{[xs]var s={name:'vec',
   show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x&&x.show?x.show(R):R(JSON.stringify(x))},s)},
   first:@{[R]R(xs[0])},
   next:@{[R]R(xs.length>1?arrTlis(xs.slice(1)):N)},
   prepend:@{[R,x]R(arrTlis([x].concat(xs)))},
   append:@{[R,x]R(arrTlis(xs.concat([x])))},
+  type:@{[R]R(xs[0])},
   call:@{[_,R,n]seqq(n)?map(R,@{[R,m]R(xs[m])},n):R(xs[n])},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
-arrTlis=@{[xs]var s={type:'lis',
+arrTlis=@{[xs]var s={name:'lis',
   show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x&&x.show?x.show(R):R(JSON.stringify(x))},s)},
   first:@{[R]R(xs[0])},
   next:@{[R]R(xs.length>1?arrTlis(xs.slice(1)):N)},
@@ -236,7 +239,7 @@ map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]S{x<-firsts(ss);f.apply(N,[R].concat(x))}}
 seqTarr=@{[R,xs]var o=[];@(xs){[ys]^^(!ys)R(o);S{x<-ys.first;o.push(x);ys.next(C)}}}
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
-      d={type:'dic',
+      d={name:'dic',
          show:@{[R]ps.show(@R('D'+x))},
          call:@{[_,R,k]get(R,k)},
          apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
@@ -296,8 +299,7 @@ drop=@{[R,n,xs]
   :udf}
 pair=@{[R,p]S{p0<-p.first;ps<-p.next;x<-ps.first;R(p0,x)}}
 rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?S{y<-xs.first;cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}:R(N)}}
-cons=@{[R,x,xs,ys]var s={
-  type:'seq',
+cons=@{[R,x,xs,ys]var s={name:'lis',
   show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
   first:@{[R]x(R)},
   next:@{[R]xs(@{[n]R(n||ys||N)})},
