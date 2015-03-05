@@ -225,8 +225,8 @@ arrTseq=@{[xs]var s={
   append:@{[R,x]R(arrTseq(xs.concat([x])))},
   call:@{[_,R,n]seqq(n)?map(R,@{[R,m]R(xs[m])},n):R(xs[n])},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
-lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]f(@{x?lazySeq(R,x,f):R(N)},a)})}
-map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]firsts(@{f.apply(N,[R].concat(x))},ss)},@{[R]nexts(@{x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)},ss)})}
+lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]S{x<-f(a);x?lazySeq(R,x,f):R(N)}})}
+map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]S{x<-firsts(ss);f.apply(N,[R].concat(x))}},@{[R]S{x<-nexts(ss);x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)}})}
 seqTarr=@{[R,xs]var o=[];@(xs){[ys]^^(!ys)R(o);S{x<-ys.first;o.push(x);ys.next(C)}}}
 seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
@@ -328,7 +328,7 @@ defaultOps={
     @{[R,a]vdoq(a)?vdo(R,@bl(!x),a):inval('~',a)},
     @{[R,a,b]
       numq(a)&&numq(b)?R(bl(a==b))
-     :seqq(a)&&seqq(b)?counts(@{[cs]^^(cs[0]!=cs[1])R(0);reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)},[a,b])
+     :seqq(a)&&seqq(b)?S{cs<-counts([a,b]);cs[0]!=cs[1]?R(0):reduce(R,@{[R,m,x,y]R(m&x==y)},1,a,b)}
      :mapq(a)&&mapq(b)?a.matches(@{x?b.matches(R,a):R(0)},b)
      :invals('~',a,b)}),
   '+':arit(N,@{[R,a,b]vdoq(a,b)?vdo(R,@x+y,a,b):invals('+',a,b)}),
