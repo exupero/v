@@ -411,7 +411,7 @@ process.stdout.write('\n');
     ^^(x.properties.width!=5)0;
     ^^(x.properties.height!=15)0;
     ^^1});
-  expect('`svg`rect',@{
+  expect('`svg@`rect',@{
     ^^(x.tagName!='svg')0;
     ^^(x.children[0].tagName!='rect')0;
     ^^1});
@@ -467,6 +467,10 @@ process.stdout.write('\n');
   expect('Now',@{
     ^^(Object.prototype.toString.call(x)!='[object Date]')0;
     ^^((new Date()).getTime()-x.getTime()<10)});
+  expect('(1;(2;(3;4)))[1 0]', [[2,[3,4]],1]);
+  expect('(1;(2;(3;4)))[1;1;0]', 3);
+  expect('(D((`a;1);(`b;2);(`c;3)))[`a `b `c]',[1,2,3]);
+  expect('(D((`a;D((`b;D((`c;99);));));))[`a;`b;`c]',99);
 };
 process.stdout.write('\n');
 process.exit(failures);

@@ -56,6 +56,8 @@ isNum=@x.t=='int'||x.t=='float'
 isNumVec=@x.t=='vector'&&isNum(x.values[0])
 isStr=@x.t=='string'
 isStrVec=@x.t=='vector'&&x.values[0].t=='string'
+isSym=@x.t=='symbol'
+isSymVec=@x.t=='vector'&&isSym(x.values[0])
 expr=@{[ts]
   ^^(ts.length==1)ts[0];
   var st,bind,i=ts.length-1;
@@ -63,6 +65,8 @@ expr=@{[ts]
      :isNumVec(x)&&isNum(y) ? 5
      :isStr(x)&&isStr(y)    ? 5
      :isStrVec(x)&&isStr(y) ? 5
+     :isSym(x)&&isSym(y)    ? 5
+     :isSymVec(x)&&isSym(y) ? 5
      :x.t=='.'&&y.t=='word' ? 5
      :x.t==':'              ? 0
      :x.p=='n'&&y.p=='n'    ? 1
@@ -77,6 +81,8 @@ expr=@{[ts]
     :isNumVec(x)&&isNum(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
     :isStr(x)&&isStr(y)    ? {t:'vector',p:'n',values:[x,y]}
     :isStrVec(x)&&isStr(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
+    :isSym(x)&&isSym(y)    ? {t:'vector',p:'n',values:[x,y]}
+    :isSymVec(x)&&isSym(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
     :x.t=='word'&&y.t==':' ? {t:'assign',p:'n',name:x.v}
     :x.t=='.'&&y.t==':'    ? {t:'assign',p:'n',name:'.'}
     :x.t=='data'&&y.t==':' ? {t:'assign',p:'n',name:'.'+x.v}
@@ -232,7 +238,11 @@ arrTlis=@{[xs]var s={name:'lis',
   next:@{[R]R(xs.length>1?arrTlis(xs.slice(1)):N)},
   prepend:@{[R,x]R(arrTlis([x].concat(xs)))},
   append:@{[R,x]R(arrTlis(xs.concat([x])))},
-  call:@{[_,R,n]seqq(n)?map(R,@{[R,m]R(xs[m])},n):R(xs[n])},
+  call:@{[_,R,n]var rest=sl(A,3);
+    seqq(n)?map(R,@{[R,m]R(xs[m])},n)
+   :rest.length==0?R(xs[n])
+   :funq(xs[n])?xs[n].apply(N,[R].concat(rest))
+   :invals('@',xs[n],rest)},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 lazySeq=@{[R,a,f]cons(R,@{[R]R(a)},@{[R]S{x<-f(a);x?lazySeq(R,x,f):R(N)}})}
 map=@{[R,f]var ss=sl(A,2);cons(R,@{[R]S{x<-firsts(ss);f.apply(N,[R].concat(x))}},@{[R]S{x<-nexts(ss);x.every(@x!=N)?map.apply(N,[R,f].concat(x)):R(N)}})}
@@ -241,7 +251,12 @@ seqTdic=@{[ps,f]
   var get=@{[R,k]@(ps){[xs]^^(!xs)R(N);xs.first(@{^^(!x)R(N);pair(@{[a,b]a==k||a.t==k.t&&a.v==k.v?(f?f(R,b,k):R(b)):xs.next(C)},x)})}},
       d={name:'dic',
          show:@{[R]ps.show(@R('D'+x))},
-         call:@{[_,R,k]get(R,k)},
+         call:@{[_,R,k]var rest=sl(A,3);
+           seqq(k)?map(R,@{[R,m]get(R,m)},k)
+          :S{v<-get(k);
+            rest.length==0?R(v)
+           :funq(v)?v.apply(N,[R].concat(rest))
+           :invals('@',v,k)}},
          apply:@{[_,xs]d.call.apply(N,[N].concat(xs))},
          get:get,
          assoc:@{[R,a]S{x<-ps.append(a);R(seqTdic(x,f))}},
