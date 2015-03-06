@@ -26,7 +26,7 @@ You can also pass data over stdin:
 v '$`ul@(`t;{x})$`li$.names' <<< '{"names": ["Alice", "Bob", "Chris"]}'
 ```
 
-The above will display a list of the given names. The passed data is also available for editing within the browser and will be returned when the server is killed.
+The above will display a list of the given names. JSON objects are converted to V dictionaries, JSON arrays are converted to V lists, JSON strings and numbers are converted to V strings and numbers respectively. The passed data is available for editing within the browser and will be returned when the server is killed.
 
 In addition to the script and data, a string representing the rendered DOM is included in the result returned from the client, and is printed by the server when it quits.
 
