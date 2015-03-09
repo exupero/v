@@ -467,10 +467,12 @@ process.stdout.write('\n');
   expect('Now',@{
     ^^(Object.prototype.toString.call(x)!='[object Date]')0;
     ^^((new Date()).getTime()-x.getTime()<10)});
-  expect('(1;(2;(3;4)))[1 0]', [[2,[3,4]],1]);
-  expect('(1;(2;(3;4)))[1;1;0]', 3);
+  expect('(1;(2;(3;4)))[1 0]',[[2,[3,4]],1]);
+  expect('(1;(2;(3;4)))[1;1;0]',3);
+  expect('(1;(5;10);12;(13;26))[1 3;0]',[5,13]);
   expect('(D((`a;1);(`b;2);(`c;3)))[`a `b `c]',[1,2,3]);
   expect('(D((`a;D((`b;D((`c;99);));));))[`a;`b;`c]',99);
+  expect('(D((`a;D((`b;D((`c;99);));(`d;D((`c;101);))));))[`a;`b `d;`c]',[99,101]);
 };
 process.stdout.write('\n');
 process.exit(failures);
