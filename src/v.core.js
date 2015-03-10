@@ -20,7 +20,7 @@ tokens=@{[input,st]
 
 lex=@{[input]
   var init,symbol,number,string,space;
-  var syms=' `~!@#$%^&*,.<>/?=+\\|-_;:"\'()[]{}',digits='0123456789',stop=syms+digits+' \n\t';
+  var syms=' `~!@#$%^&*,.<>/?=+\\|-_;:"\'()[]{}',digits='0123456789',stop=syms+' \n\t';
   init=@{[t]
     var e=t.emit,c;
     while(1){
@@ -68,8 +68,9 @@ expr=@{[ts]
      :isSym(x)&&isSym(y)    ? 5
      :isSymVec(x)&&isSym(y) ? 5
      :x.t=='.'&&y.t=='word' ? 5
-     :x.t==':'              ? 0
+     :x.t=='.'&&y.t==':'    ? 3
      :x.p=='n'&&y.p=='n'    ? 1
+     :x.t==':'&&y.p=='v'    ? 0
      :x.p=='v'&&y.p=='v'    ? 1
      :x.p=='v'&&y.p=='n'    ? 2
      :x.p=='n'&&y.p=='v'    ? 3
@@ -83,11 +84,11 @@ expr=@{[ts]
     :isStrVec(x)&&isStr(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
     :isSym(x)&&isSym(y)    ? {t:'vector',p:'n',values:[x,y]}
     :isSymVec(x)&&isSym(y) ? {t:'vector',p:'n',values:x.values.concat([y])}
-    :x.t=='word'&&y.t==':' ? {t:'assign',p:'n',name:x.v}
-    :x.t=='.'&&y.t==':'    ? {t:'assign',p:'n',name:'.'}
-    :x.t=='data'&&y.t==':' ? {t:'assign',p:'n',name:'.'+x.v}
     :x.t=='.'&&y.t=='word' ? {t:'data',p:'n',v:y.v}
     :x.p=='n'&&y.p=='n'    ? {t:'apply',p:'n',func:x,arg:y}
+    :x.t=='data'&&y.t==':' ? {t:'assign',p:'v',name:'.'+x.v}
+    :x.t=='.'&&y.t==':'    ? {t:'assign',p:'v',name:'.'}
+    :x.p=='n'&&y.t==':'    ? {t:'assign',p:'v',name:x.v}
     :x.p=='n'&&y.p=='v'    ? {t:'curry',p:'v',func:y,arg:x}
     :x.p=='n'&&y.p=='a'    ? {t:'modNoun',p:'v',mod:y,arg:x}
     :x.p=='v'&&y.p=='n'    ? {t:'applyMonad',p:'n',func:x,arg:y}

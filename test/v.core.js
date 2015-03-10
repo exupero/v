@@ -196,16 +196,24 @@ process.stdout.write('\n');
      func:{t:'%',v:'%',p:'v'},
      arg:{t:'args',p:'n',args:[void 0,{t:'int',v:'2',p:'n'}]}}]);
   expect('ne:~=',[
-    {t:'apply',p:'n',
-     func:{t:'assign',p:'n',name:'ne'},
+    {t:'applyMonad',p:'n',
+     func:{t:'assign',p:'v',name:'ne'},
      arg:{t:'compose',p:'n',
           f:{t:'~',v:'~',p:'v'},
           g:{t:'=',v:'=',p:'v'}}}]);
   expect('`"hello world"',[{t:'symbol',v:'hello world',p:'n'}]);
   expect('.data',[{t:'data',p:'n',v:'data'}]);
   expect('`a.obj',[{t:'apply',p:'n',func:{t:'symbol',v:'a',p:'n'},arg:{t:'data',p:'n',v:'obj'}}]);
-  expect('.:N',[{t:'apply',p:'n',func:{t:'assign',p:'n',name:'.'},arg:{t:'N',v:'N',p:'n'}}]);
-  expect('.nil:N',[{t:'apply',p:'n',func:{t:'assign',p:'n',name:'.nil'},arg:{t:'N',v:'N',p:'n'}}]);
+  expect('.:N',[{t:'applyMonad',p:'n',func:{t:'assign',p:'v',name:'.'},arg:{t:'N',v:'N',p:'n'}}]);
+  expect('.nil:N',[{t:'applyMonad',p:'n',func:{t:'assign',p:'v',name:'.nil'},arg:{t:'N',v:'N',p:'n'}}]);
+  expect('5+b:2',[
+    {t:'applyMonad',p:'n',
+     func:{t:'curry',p:'v',
+           func:{t:'+',v:'+',p:'v'},
+           arg:{t:'int',v:'5',p:'n'}},
+     arg:{t:'applyMonad',p:'n',
+          func:{t:'assign',p:'v',name:'b'},
+          arg:{t:'int',v:'2',p:'n'}}}]);
 };
 
 @!{
@@ -473,6 +481,8 @@ process.stdout.write('\n');
   expect('(D((`a;1);(`b;2);(`c;3)))[`a `b `c]',[1,2,3]);
   expect('(D((`a;D((`b;D((`c;99);));));))[`a;`b;`c]',99);
   expect('(D((`a;D((`b;D((`c;99);));(`d;D((`c;101);))));))[`a;`b `d;`c]',[99,101]);
+  expect('y1:5',5);
+  expect('5+b:2',7);
 };
 process.stdout.write('\n');
 process.exit(failures);
