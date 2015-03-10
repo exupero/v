@@ -481,6 +481,8 @@ process.stdout.write('\n');
   expect('(D((`a;1);(`b;2);(`c;3)))[`a `b `c]',[1,2,3]);
   expect('(D((`a;D((`b;D((`c;99);));));))[`a;`b;`c]',99);
   expect('(D((`a;D((`b;D((`c;99);));(`d;D((`c;101);))));))[`a;`b `d;`c]',[99,101]);
+  expect('(.data[5])@`test',5,{data:{data:@{[R,a]R({test:@{^^a}})}}});
+  expect('(.data[5])@(`test;2)',10,{data:{data:@{[R,a]R({test:@{^^a*x}})}}});
   expect('y1:5',5);
   expect('5+b:2',7);
 };

@@ -197,6 +197,9 @@ jsTv=@{
    :funq(x)?x
    :objq(x)?objTdic(x,1)
    :x}
+vTjs=@{[R,x]
+  seqq(x)?seqTarr(R,x)
+ :x}
 objTdic=@{var s=[],k;for(k in x)s.push(arrTlis([strTsym(k),y?jsTv(x[k]):x[k]]));^^seqTdic(arrTlis(s))}
 channel=@{var m=this,c={
   put:@{[R,x]
@@ -396,7 +399,11 @@ defaultOps={
      :R.fail(a,b)}),
   '@':arit('@',
     @{[R,a]R(bl(numq(a)||symq(a)))},
-    @{[R,a,b]funq(a)?a.call(N,R,b):R.fail(a,b)}),
+    @{[R,a,b]
+      funq(a)?a.call(N,R,b)
+     :objq(a)&&symq(b)?R(a[b.v]())
+     :objq(a)&&seqq(b)?S{ys<-seqTarr(b);R(a[ys[0].v].apply(N,sl(ys,1)))}
+     :R.fail(a,b)}),
   '#':arit('#',
     @{[R,a]
       strq(a)?R(a.length)
@@ -431,9 +438,12 @@ defaultOps={
   ',':arit(',',
     @{[R,a]numq(a)?R(arrTlis([a])):R.fail(a)},
     @{[R,a,b]
-      numq(a)&&numq(b)?R(arrTlis([a,b]))
-     :numq(a)&&seqq(b)?b.prepend(R,a)
-     :seqq(a)&&numq(b)?a.append(R,b)
+      numq(a)&&numq(b)?R(arrTvec([a,b]))
+     :strq(a)&&strq(b)?R(arrTvec([a,b]))
+     :symq(a)&&symq(b)?R(arrTvec([a,b]))
+     :atoq(a)&&atoq(b)?R(arrTlis([a,b]))
+     :atoq(a)&&seqq(b)?b.prepend(R,a)
+     :seqq(a)&&atoq(b)?a.append(R,b)
      :seqq(a)&&seqq(b)?concat(R,a,b)
      :seqq(a)&&mapq(b)?b.assoc(R,a)
      :mapq(a)&&seqq(b)?a.assoc(R,b)
@@ -477,4 +487,5 @@ defaultOps={
 }
 
 run.jsTv=jsTv;
+run.vTjs=vTjs;
 run.atomic=atomic;
