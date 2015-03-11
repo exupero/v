@@ -334,16 +334,16 @@ drop=@{[R,n,xs]
   :udf}
 pair=@{[R,p]S{p0<-p.first;ps<-p.next;x<-ps.first;R(p0,x)}}
 rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?S{y<-xs.first;cons(R,@{[R]R([x,y])},@{[R]rollPairs(R,xs)})}:R(N)}}
-cons=@{[R,x,xs,ys]var s={name:'lis',
-  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s)},
+cons=@{[R,x,xs,ys]var s={name:'cons',
+  show:@{[R]S{x<-map(@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s);x<-seqTarr(x);R('('+x.join(';')+')')}},
   first:@{[R]x(R)},
-  next:@{[R]xs(@{[n]R(n||ys||N)})},
+  next:@{[R]S{n<-xs;n?cons(R,n.first,n.next,ys):R(ys)}},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?S{yss<-ys.append(y);cons(R,x,xs,yss)}:cons(R,x,xs,arrTlis([y]))},
   call:@{[_,R,n]
     seqq(n)?map(R,@{[R,m]s.call(N,R,m)},n)
    :n==0?s.first(R)
-   :s.next(@{x.call(N,R,n-1)})},
+   :S{x<-s.next;x.call(N,R,n-1)}},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};R(s)}
 where=@{[R,xs,i,j]
   !xs           ? R(N)

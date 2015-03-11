@@ -217,7 +217,7 @@ process.stdout.write('\n');
 };
 
 @!{
-  var ar=@{[R,v]seqq(v)?@!{var a=[];@(v){[xs]xs?xs.first(@{ar(@{[xr]a.push(xr);xs.next(C)},x)}):R(a)}}:R(v)},
+  var ar=@{[R,v]seqq(v)?@!{var a=[];@(v){[xs]xs?S{x<-xs.first;xr<-ar(x);a.push(xr);xs.next(C)}:R(a)}}:R(v)},
       srcErr=@{err('`'+x+'` '+y)},
       expect=@!{
         var trace=0,O=@{[src,x,opts]
@@ -485,6 +485,7 @@ process.stdout.write('\n');
   expect('(.data[5])@(`test;2)',10,{data:{data:@{[R,a]R({test:@{^^a*x}})}}});
   expect('y1:5',5);
   expect('5+b:2',7);
+  expect('({x*2}\'(1;2;5)),"green"',[2,4,10,"green"]);
 };
 process.stdout.write('\n');
 process.exit(failures);
