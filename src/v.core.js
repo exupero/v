@@ -67,6 +67,7 @@ expr=@{[ts]
      :isStrVec(x)&&isStr(y) ? 5
      :isSym(x)&&isSym(y)    ? 5
      :isSymVec(x)&&isSym(y) ? 5
+     :x.p=='n'&&y.t=='args' ? 5
      :x.t=='.'&&y.t=='word' ? 5
      :x.t=='.'&&y.t==':'    ? 3
      :x.p=='n'&&y.p=='n'    ? 1
@@ -245,7 +246,7 @@ arrTvec=@{[xs]var s={name:'vec',
    :invals('@',xs[n],rs)},
   apply:@{[_,xs]s.call.apply(N,[N].concat(xs))}};^^s}
 arrTlis=@{[xs]var s={name:'lis',
-  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x&&x.show?x.show(R):R(JSON.stringify(x))},s)},
+  show:@{[R]map(@{seqTarr(@{R('('+x.join(';')+')')},x)},@{[R,x]x&&x.show?x.show(R):R(JSON.stringify(x)||x)},s)},
   first:@{[R]R(xs[0])},
   next:@{[R]R(xs.length>1?arrTlis(xs.slice(1)):N)},
   prepend:@{[R,x]R(arrTlis([x].concat(xs)))},
@@ -337,7 +338,7 @@ rollPairs=@{[R,s]S{x<-s.first;xs<-s.next;xs?S{y<-xs.first;cons(R,@{[R]R([x,y])},
 cons=@{[R,x,xs,ys]var s={name:'cons',
   show:@{[R]S{x<-map(@{[R,x]x.show?x.show(R):R(JSON.stringify(x))},s);x<-seqTarr(x);R('('+x.join(';')+')')}},
   first:@{[R]x(R)},
-  next:@{[R]S{n<-xs;n?cons(R,n.first,n.next,ys):R(ys)}},
+  next:@{[R]S{n<-xs;n?cons(R,n.first,n.next,ys):R(ys||N)}},
   prepend:@{[R,y]cons(R,@{[R]R(y)},@{[R]R(s)},ys)},
   append:@{[R,y]ys?S{yss<-ys.append(y);cons(R,x,xs,yss)}:cons(R,x,xs,arrTlis([y]))},
   call:@{[_,R,n]

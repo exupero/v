@@ -223,6 +223,7 @@ process.stdout.write('\n');
         var trace=0,O=@{[src,x,opts]
           var c=0,go=@{[]run(src,@{[r]c=1;ar(@{[r]c=2
             if(x&&x.call){if(!x(r)){srcErr(src,'== '+spect(r)+' and does not pass check');failures=1;return}}
+            else if(r&&r.call){if(r.toString()!=x.toString()){srcErr(src,'== '+r.toString()+' != '+x.toString());failures=1;return}}
             else if(s(r)!=s(x)){srcErr(src,'== '+s(r)+' != '+s(x));failures=1;return}
             success()},r);if(c==1){srcErr(src,'produces unconvertable result '+spect(r));failures=1}},opts)}
           if(trace)go();else try{go()}catch(e){err(e)}
@@ -486,6 +487,8 @@ process.stdout.write('\n');
   expect('y1:5',5);
   expect('5+b:2',7);
   expect('({x*2}\'(1;2;5)),"green"',[2,4,10,"green"]);
+  expect('id:(req`module)@`id;id[5]',5,{env:{req:@{[R,n]R(jsTv({id:arity(@{[R,x]R(x)},1)}))}}})
+  expect('a:b[2];a',2,{env:{b:@{[R,n]R(n)}}});
 };
 process.stdout.write('\n');
 process.exit(failures);
