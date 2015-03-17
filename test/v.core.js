@@ -458,6 +458,13 @@ process.stdout.write('\n');
     if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
     if(d>1){srcErr(src,"calls appendChild more than once");failures;return}
     success()};
+  @!{var src='$(`a;`width;200;`height;200)$`svg@(`a;`width;100;`height;100;`x;50;`y;50;`fill;`color)$`rect$(D((`x;"green"););)',c=0,d=0;
+    try{run.call({appendChild:@{d++}},src,@{c=1})}
+    catch(e){srcErr(src,'failed with "'+e+'"');failures=1;return}
+    if(!c){srcErr(src,"does not return a result");failures=1;return}
+    if(!d){srcErr(src,"does not add HTML to DOM");failures=1;return}
+    if(d>1){srcErr(src,"calls appendChild more than once");failures;return}
+    success()};
   expect('.hi','hello',{data:{hi:'hello'}});
   expect('+\\.nums',[5,15,30],{data:{nums:[5,10,15]}});
   expect('.obj`a','b',{data:{obj:{a:'b'}}});

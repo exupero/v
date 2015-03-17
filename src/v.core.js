@@ -184,7 +184,7 @@ seqq=ich('next','first','prepend','append');
 mapq=ich('get','assoc','dissoc','remap','keys','values','matches');
 chaq=ich('put','take','close','isOpen');
 arrq=@{^^x instanceof Array};
-symq=@x.t=='symbol';
+symq=@x&&x.t=='symbol';
 vecq=@seqq(x)&&typq(x)
 atoq=@numq(x)||strq(x)||symq(x);
 colq=@seqq(x)||mapq(x)||chaq(x);
@@ -363,7 +363,7 @@ show=@{[r,t]
   if(r._node&&r._tree){r._node=P(r._node,D(r._tree,t),r._tree=t)}
   else{r._node=n=CE(t);r._tree=t;r.appendChild(n)}}
 
-func=@funq(x)?x:@{[R]R(x)}
+func=@funq(x)?@{[]x.apply(N,sl(A))}:@{[R]R(x)}
 teq=@x==y||Math.abs(x-y)<1e-10
 
 var arit=@{[n]var ars=sl(A,1);^^arity(@{[R,a,b]R.fail=@{udfq(y)?inval(n,x):invals(n,x,y)};ars[A.length-2].call(this,R,a,b)},2)},
