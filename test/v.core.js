@@ -53,7 +53,7 @@ process.stdout.write('\n');
     {t:'C',v:'C',p:'n'},{t:'word',v:'i',p:'n'},
     {t:'D',v:'D',p:'v'},{t:'word',v:'i',p:'n'},
     {t:'N',v:'N',p:'n'},{t:'word',v:'i',p:'n'}]);
-  expect("abc\ndef",[{t:'word',v:'abc',p:'n'},{t:';',v:'\n',p:void 0},{t:'word',v:'def',p:'n'}]);
+  expect("abc\ndef",[{t:'word',v:'abc',p:'n'},{t:'\n',v:'\n',p:void 0},{t:'word',v:'def',p:'n'}]);
   expect("abc NB. this",[{t:'word',v:'abc',p:'n'}]);
   expect('Now',[{t:'Now',v:'Now',p:'n'}]);
 };
@@ -214,6 +214,7 @@ process.stdout.write('\n');
      arg:{t:'applyMonad',p:'n',
           func:{t:'assign',p:'v',name:'b'},
           arg:{t:'int',v:'2',p:'n'}}}]);
+  expect('(\n`a;)',[{t:'list',p:'n',values:[{t:'symbol',v:'a',p:'n'}]}]);
 };
 
 @!{

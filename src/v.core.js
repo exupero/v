@@ -35,7 +35,7 @@ lex=@{[input]
         case '/':t.nextChar()==':'?e('/:','a'):@!{t.backup();e('/','a')};break;
         case '\\':t.nextChar()==':'?e('\\:','a'):@!{t.backup();e('\\','a')};break;
         case '\'':t.nextChar()==':'?e("':",'a'):@!{t.backup();e("'",'a')};break;
-        case '\n':e(';');break;
+        case '\n':e('\n');break;
         case 'C':e('C','n');break;
         case 'D':e('D','v');break;
         case 'L':e('L','v');break;
@@ -103,10 +103,11 @@ expr=@{[ts]
     if(st(ts[i-2],ts[i-1])<st(ts[i-1],ts[i])){bind(ts[i-1],ts[i]);continue}
     i--}
   ^^ts[0]}
-exprs=@{[ts]
+exprs=@{[ts,nas]
+  if(!nas)ts=ts.filter(@x.t!='\n');
   var i,e=ts.length;
   for(i=e-1;i>=0;i--){
-    if(ts[i].t==';'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}
+    if(ts[i].t==';'||nas&&ts[i].t=='\n'){ts.splice(i,e-i,ts.slice(i+1,e));e=i}
     if(i==0)ts.splice(i,e-i,ts.slice(i,e))}
   for(i=0;i<ts.length;i++)ts.splice(i,1,expr(ts[i]));
   ^^ts}
@@ -115,7 +116,7 @@ wraps=@{[ts]
   for(i=ts.length-1;i>=0;i--){
     t=ts[i];
     if(t.t=='(')find(')',@{var x=exprs(x);^^x.length==1?x[0]:{t:'list',p:'n',values:udfq(x[0])?[]:udfq(x[1])?[x[0]]:x}});
-    else if(t.t=='[')find(']',@{^^{t:'args',p:'n',args:exprs(x)}});
+    else if(t.t=='[')find(']',@{^^{t:'args',p:'n',args:exprs(x,1)}});
     else if(t.t=='{')find('}',@{[tss]var args;
       if(tss[0].t=='args')args=tss[0].args.map(@x.v),tss=tss.slice(1);
       else{var a=tss.filter(@x.t=='word'&&(x.v=='x'||x.v=='y'||x.v=='z')).map(@x.v);
@@ -123,9 +124,9 @@ wraps=@{[ts]
         else if(a.indexOf('y')!=-1)args=['x','y'];
         else if(a.indexOf('x')!=-1)args=['x'];
         else args=[]}
-      ^^{t:'func',p:'n',args:args,body:exprs(tss)}})}
+      ^^{t:'func',p:'n',args:args,body:exprs(tss,1)}})}
   ^^ts}
-parse=@exprs(wraps(lex(x)))
+parse=@exprs(wraps(lex(x)),1)
 
 var arity=@{[f,a]f.arity=a;^^f};
 module.exports=run=@{[src,R,opts]
